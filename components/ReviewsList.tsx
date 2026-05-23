@@ -1,75 +1,146 @@
-type Review = {
+'use client'
+
+import { useEffect, useState } from 'react'
+
+import { supabase } from '@/lib/supabase'
+
+interface Review {
   id: string
-  reviewer_name: string
-  rating: number
+  name: string
   comment: string
+  rating: number
   created_at: string
 }
 
 export default function ReviewsList({
-  reviews
+  propertyId
 }: {
-  reviews: Review[]
+  propertyId: string
 }) {
+
+  const [reviews, setReviews] =
+    useState<Review[]>([])
+
+  const [loading, setLoading] =
+    useState(true)
+
+  // FETCH REVIEWS
+
+  const fetchReviews = async () => {
+
+    const { data, error } =
+      await supabase
+        .from('reviews')
+        .select('*')
+        .eq('property_id', propertyId)
+        .order('created_at', {
+          ascending: false
+        })
+
+    if (error) {
+
+      console.log(error.message)
+
+      setLoading(false)
+
+      return
+    }
+
+    setReviews(data || [])
+
+    setLoading(false)
+  }
+
+  useEffect(() => {
+
+    fetchReviews()
+
+  }, [])
+
+  // LOADING
+
+  if (loading) {
+
+    return (
+
+      <p className="text-gray-500">
+
+        Loading reviews...
+
+      </p>
+
+    )
+  }
+
+  // NO REVIEWS
+
+  if (reviews.length === 0) {
+
+    return (
+
+      <div className="bg-white rounded-2xl p-8 shadow-lg">
+
+        <p className="text-gray-500 text-lg">
+
+          No reviews yet.
+
+        </p>
+
+      </div>
+
+    )
+  }
 
   return (
 
-    <div className="bg-white p-8 rounded-3xl shadow-lg mt-10">
+    <div className="space-y-6">
 
-      <h2 className="text-3xl font-bold text-orange-500 mb-8">
-        Client Reviews
-      </h2>
+      {reviews.map((review) => (
 
-      {reviews.length === 0 && (
+        <div
+          key={review.id}
+          className="bg-white rounded-2xl shadow-lg p-6"
+        >
 
-        <p className="text-gray-500">
-          No reviews yet.
-        </p>
+          {/* REVIEW HEADER */}
 
-      )}
+          <div className="flex items-center justify-between mb-4">
 
-      <div className="space-y-8">
+            <h3 className="text-2xl font-bold text-orange-500">
 
-        {reviews.map((review) => (
+              {review.name}
 
-          <div
-            key={review.id}
-            className="border-b pb-6"
-          >
+            </h3>
 
-            <div className="flex justify-between items-center mb-4">
+            <div className="text-yellow-500 text-xl">
 
-              <h3 className="font-bold text-xl">
-                {review.reviewer_name}
-              </h3>
-
-              <div className="text-yellow-500 text-lg">
-
-                {'⭐'.repeat(review.rating)}
-
-              </div>
+              {'⭐'.repeat(review.rating)}
 
             </div>
 
-            <p className="text-gray-700 leading-7">
-
-              {review.comment}
-
-            </p>
-
-            <p className="text-sm text-gray-400 mt-3">
-
-              {new Date(
-                review.created_at
-              ).toLocaleDateString()}
-
-            </p>
-
           </div>
 
-        ))}
+          {/* COMMENT */}
 
-      </div>
+          <p className="text-gray-600 text-lg leading-relaxed mb-4">
+
+            {review.comment}
+
+          </p>
+
+          {/* DATE */}
+
+          <p className="text-sm text-gray-400">
+
+            {new Date(
+              review.created_at
+            ).toLocaleDateString()}
+
+          </p>
+
+        </div>
+
+      ))}
 
     </div>
   )

@@ -1,71 +1,100 @@
+'use client'
+
 import Link from 'next/link'
 
-type PropertyProps = {
-  id?: string
-  title: string
-  description: string
-  location: string
-  price: string
-  image_url: string
-  category: string
+interface PropertyCardProps {
+
+  property: {
+    id: string
+    title: string
+    location: string
+    price: string
+    description: string
+    image_url?: string
+  }
 }
 
 export default function PropertyCard({
-  id,
-  title,
-  description,
-  location,
-  price,
-  image_url,
-  category
-}: PropertyProps) {
+  property
+}: PropertyCardProps) {
 
   return (
 
-    <Link href={`/properties/${id}`}>
+    <div className="bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300">
 
-      <div className="bg-white rounded-3xl shadow-lg overflow-hidden hover:scale-105 transition duration-300 cursor-pointer">
+      {/* PROPERTY IMAGE */}
+
+      {property.image_url ? (
 
         <img
-          src={image_url}
-          alt={title}
+          src={property.image_url}
+          alt={property.title}
           className="w-full h-64 object-cover"
         />
 
-        <div className="p-6">
+      ) : (
 
-          <div className="flex justify-between items-center mb-4">
+        <div className="w-full h-64 bg-orange-100 flex items-center justify-center text-orange-500 text-xl font-semibold">
 
-            <h2 className="text-2xl font-bold text-orange-500">
-              {title}
-            </h2>
+          No Image Available
 
-            <span className="bg-orange-100 text-orange-600 px-4 py-2 rounded-full text-sm font-bold">
-              {category}
-            </span>
+        </div>
 
-          </div>
+      )}
 
-          <p className="text-gray-600 mb-4">
-            {description.substring(0, 100)}...
-          </p>
+      {/* PROPERTY DETAILS */}
 
-          <div className="space-y-2">
+      <div className="p-6">
 
-            <p className="font-semibold">
-              📍 {location}
-            </p>
+        <h2 className="text-2xl font-bold text-orange-500 mb-3">
 
-            <p className="text-xl font-bold text-green-600">
-              Ksh {price}
-            </p>
+          {property.title}
 
-          </div>
+        </h2>
+
+        <p className="text-gray-600 mb-2">
+
+          📍 {property.location}
+
+        </p>
+
+        <p className="text-2xl font-bold text-gray-800 mb-4">
+
+          Ksh {property.price}
+
+        </p>
+
+        <p className="text-gray-500 mb-6 line-clamp-3">
+
+          {property.description}
+
+        </p>
+
+        {/* ACTION BUTTONS */}
+
+        <div className="flex gap-4">
+
+          <Link
+            href={`/properties/${property.id}`}
+            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-center py-3 rounded-xl font-semibold transition"
+          >
+
+            View Property
+
+          </Link>
+
+          <button
+            className="bg-orange-100 hover:bg-orange-200 text-orange-500 px-4 rounded-xl transition"
+          >
+
+            ❤️
+
+          </button>
 
         </div>
 
       </div>
 
-    </Link>
+    </div>
   )
 }
