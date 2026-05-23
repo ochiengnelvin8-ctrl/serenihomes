@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #fff7ed;
+  color: #1f2937;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.btn-primary {
+  background-color: #f97316;
+  color: white;
+  font-weight: bold;
+  padding: 12px 24px;
+  border-radius: 12px;
+  transition: 0.3s;
+}
+
+.btn-primary:hover {
+  background-color: #ea580c;
+}
