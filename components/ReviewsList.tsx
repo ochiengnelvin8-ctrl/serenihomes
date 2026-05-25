@@ -1,93 +1,34 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-
-import { supabase } from '@/lib/supabase'
-
 interface Review {
-  id: string
-  name: string
+
+  id: number
+
+  user_name: string
+
   comment: string
+
   rating: number
+
   created_at: string
 }
 
+interface ReviewsListProps {
+
+  reviews: Review[]
+}
+
 export default function ReviewsList({
-  propertyId
-}: {
-  propertyId: string
-}) {
+  reviews,
+}: ReviewsListProps) {
 
-  const [reviews, setReviews] =
-    useState<Review[]>([])
-
-  const [loading, setLoading] =
-    useState(true)
-
-  // FETCH REVIEWS
-
-  const fetchReviews = async () => {
-
-    const { data, error } =
-      await supabase
-        .from('reviews')
-        .select('*')
-        .eq('property_id', propertyId)
-        .order('created_at', {
-          ascending: false
-        })
-
-    if (error) {
-
-      console.log(error.message)
-
-      setLoading(false)
-
-      return
-    }
-
-    setReviews(data || [])
-
-    setLoading(false)
-  }
-
-  useEffect(() => {
-
-    fetchReviews()
-
-  }, [])
-
-  // LOADING
-
-  if (loading) {
+  if (!reviews.length) {
 
     return (
 
-      <p className="text-gray-500">
+      <div className="text-gray-500">
 
-        Loading reviews...
-
-      </p>
-
-    )
-  }
-
-  // NO REVIEWS
-
-  if (reviews.length === 0) {
-
-    return (
-
-      <div className="bg-white rounded-2xl p-8 shadow-lg">
-
-        <p className="text-gray-500 text-lg">
-
-          No reviews yet.
-
-        </p>
+        No reviews yet.
 
       </div>
-
     )
   }
 
@@ -99,30 +40,36 @@ export default function ReviewsList({
 
         <div
           key={review.id}
-          className="bg-white rounded-2xl shadow-lg p-6"
+          className="
+            bg-orange-50
+            rounded-2xl
+            p-5
+            border
+          "
         >
 
-          {/* REVIEW HEADER */}
+          {/* HEADER */}
 
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex justify-between items-center mb-3">
 
-            <h3 className="text-2xl font-bold text-orange-500">
+            <h3 className="font-bold text-lg">
 
-              {review.name}
+              {review.user_name ||
+                "Anonymous"}
 
             </h3>
 
-            <div className="text-yellow-500 text-xl">
+            <span className="text-orange-500 font-semibold">
 
-              {'⭐'.repeat(review.rating)}
+              ⭐ {review.rating}/5
 
-            </div>
+            </span>
 
           </div>
 
           {/* COMMENT */}
 
-          <p className="text-gray-600 text-lg leading-relaxed mb-4">
+          <p className="text-gray-700 leading-7">
 
             {review.comment}
 
@@ -130,7 +77,7 @@ export default function ReviewsList({
 
           {/* DATE */}
 
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-500 mt-4">
 
             {new Date(
               review.created_at

@@ -1,62 +1,108 @@
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
-import ReviewsList from '@/components/ReviewsList'
-import ReviewForm from '@/components/ReviewForm'
+import { supabase } from "@/lib/supabase"
+import Image from "next/image"
+import Link from "next/link"
 
-import { supabase } from '@/lib/supabase'
+import ReviewsList
+from "@/components/ReviewsList"
 
-interface PropertyPageProps {
+import FavoriteButton
+from "@/components/FavoriteButton"
+
+interface PageProps {
+
   params: Promise<{
     id: string
   }>
 }
 
 export default async function PropertyDetailsPage({
-  params
-}: PropertyPageProps) {
+  params,
+}: PageProps) {
 
   const { id } = await params
 
   // FETCH PROPERTY
 
-  const { data: property, error } =
+  const {
+    data: property,
+    error,
+  } =
     await supabase
-      .from('properties')
-      .select('*')
-      .eq('id', id)
+      .from("properties")
+      .select("*")
+      .eq("id", id)
       .single()
+
+  // FETCH REVIEWS
+
+  const {
+    data: reviews,
+  } =
+    await supabase
+      .from("reviews")
+      .select("*")
+      .eq(
+        "property_id",
+        id
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false,
+        }
+      )
 
   // PROPERTY NOT FOUND
 
-  if (error || !property) {
+  if (
+    error ||
+    !property
+  ) {
 
     return (
 
-      <main className="min-h-screen bg-orange-50">
+      <main
+        className="
+          min-h-screen
+          flex
+          items-center
+          justify-center
+          bg-orange-50
+        "
+      >
 
-        <Navbar />
+        <div className="text-center">
 
-        <section className="max-w-4xl mx-auto px-6 py-32 text-center">
-
-          <h1 className="text-5xl font-bold text-red-500 mb-6">
+          <h1
+            className="
+              text-5xl
+              font-bold
+              text-red-500
+              mb-5
+            "
+          >
 
             Property Not Found
 
           </h1>
 
-          <p className="text-gray-600 text-xl">
+          <Link
+            href="/properties"
 
-            The property you are looking for
-            does not exist.
+            className="
+              text-orange-500
+              font-semibold
+              text-lg
+            "
+          >
 
-          </p>
+            ← Back to Properties
 
-        </section>
+          </Link>
 
-        <Footer />
+        </div>
 
       </main>
-
     )
   }
 
@@ -64,205 +110,124 @@ export default async function PropertyDetailsPage({
 
     <main className="min-h-screen bg-orange-50">
 
-      <Navbar />
-
       {/* HERO SECTION */}
 
-      <section className="max-w-7xl mx-auto px-6 py-20">
+      <section
+        className="
+          relative
+          h-[500px]
+          w-full
+        "
+      >
 
-        {/* PROPERTY IMAGE */}
+        {/* IMAGE */}
 
-        {property.image_url ? (
+        <Image
+          src={
+            property.image_url ||
 
-          <img
-            src={property.image_url}
-            alt={property.title}
-            className="w-full h-[500px] object-cover rounded-3xl shadow-xl mb-12"
+            "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?q=80&w=1600&auto=format&fit=crop"
+          }
+
+          alt={property.title}
+
+          fill
+
+          priority
+
+          className="object-cover"
+        />
+
+        {/* OVERLAY */}
+
+        <div
+          className="
+            absolute
+            inset-0
+            bg-black/50
+          "
+        />
+
+        {/* FAVORITE BUTTON */}
+
+        <div
+          className="
+            absolute
+            top-6
+            right-6
+            z-20
+          "
+        >
+
+          <FavoriteButton
+            propertyId={property.id}
           />
 
-        ) : (
+        </div>
 
-          <div className="w-full h-[500px] bg-orange-100 rounded-3xl flex items-center justify-center text-orange-500 text-3xl font-bold mb-12">
+        {/* CONTENT */}
 
-            No Image Available
+        <div
+          className="
+            absolute
+            bottom-0
+            left-0
+            w-full
+            z-10
+          "
+        >
 
-          </div>
+          <div
+            className="
+              max-w-7xl
+              mx-auto
+              px-6
+              pb-10
+              text-white
+            "
+          >
 
-        )}
+            <div
+              className="
+                inline-block
+                bg-orange-500
+                px-4
+                py-2
+                rounded-full
+                font-semibold
+                mb-5
+              "
+            >
 
-        {/* PROPERTY DETAILS */}
-
-        <div className="bg-white rounded-3xl shadow-xl p-10">
-
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-10">
-
-            <div>
-
-              <h1 className="text-5xl font-bold text-orange-500 mb-4">
-
-                {property.title}
-
-              </h1>
-
-              <p className="text-2xl text-gray-600">
-
-                📍 {property.location}
-
-              </p>
+              {property.category ||
+                "Property"}
 
             </div>
 
-            <div>
+            <h1
+              className="
+                text-5xl
+                md:text-6xl
+                font-extrabold
+                mb-5
+              "
+            >
 
-              <p className="text-4xl font-bold text-gray-800">
+              {property.title}
 
-                Ksh {property.price}
+            </h1>
 
-              </p>
+            <p
+              className="
+                text-xl
+                md:text-2xl
+                text-orange-100
+              "
+            >
 
-            </div>
-
-          </div>
-
-          {/* DESCRIPTION */}
-
-          <div className="mb-12">
-
-            <h2 className="text-3xl font-bold text-orange-500 mb-6">
-
-              Description
-
-            </h2>
-
-            <p className="text-lg text-gray-600 leading-relaxed">
-
-              {property.description}
+              📍 {property.location}
 
             </p>
-
-          </div>
-
-          {/* PROPERTY FEATURES */}
-
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
-
-            <div className="bg-orange-100 rounded-2xl p-6 text-center">
-
-              <h3 className="text-2xl font-bold text-orange-500 mb-2">
-
-                Safe
-
-              </h3>
-
-              <p className="text-gray-600">
-
-                Secure and family-friendly environment
-
-              </p>
-
-            </div>
-
-            <div className="bg-orange-100 rounded-2xl p-6 text-center">
-
-              <h3 className="text-2xl font-bold text-orange-500 mb-2">
-
-                Comfortable
-
-              </h3>
-
-              <p className="text-gray-600">
-
-                Warm and welcoming modern living
-
-              </p>
-
-            </div>
-
-            <div className="bg-orange-100 rounded-2xl p-6 text-center">
-
-              <h3 className="text-2xl font-bold text-orange-500 mb-2">
-
-                Accessible
-
-              </h3>
-
-              <p className="text-gray-600">
-
-                Easy access to nearby services
-
-              </p>
-
-            </div>
-
-          </div>
-
-          {/* CONTACT SECTION */}
-
-          <div className="bg-orange-500 rounded-3xl p-10 text-white mb-12">
-
-            <h2 className="text-4xl font-bold mb-6">
-
-              Interested In This Property?
-
-            </h2>
-
-            <p className="text-xl mb-8">
-
-              Contact Sereni Homes support for
-              inquiries, bookings, or assistance.
-
-            </p>
-
-            <div className="space-y-4">
-
-              <a
-                href="https://wa.me/254115416729"
-                target="_blank"
-                className="block bg-white text-orange-500 text-center py-4 rounded-xl font-bold hover:bg-orange-100 transition"
-              >
-
-                Chat on WhatsApp
-
-              </a>
-
-              <a
-                href="mailto:ochiengnevo8@gmail.com"
-                className="block bg-white text-orange-500 text-center py-4 rounded-xl font-bold hover:bg-orange-100 transition"
-              >
-
-                Send Email
-
-              </a>
-
-            </div>
-
-          </div>
-
-          {/* REVIEWS SECTION */}
-
-          <div className="mb-12">
-
-            <h2 className="text-4xl font-bold text-orange-500 mb-8">
-
-              Client Reviews
-
-            </h2>
-
-            <ReviewsList propertyId={property.id} />
-
-          </div>
-
-          {/* REVIEW FORM */}
-
-          <div>
-
-            <h2 className="text-4xl font-bold text-orange-500 mb-8">
-
-              Leave A Review
-
-            </h2>
-
-            <ReviewForm propertyId={property.id} />
 
           </div>
 
@@ -270,9 +235,432 @@ export default async function PropertyDetailsPage({
 
       </section>
 
-      <Footer />
+      {/* MAIN CONTENT */}
+
+      <section
+        className="
+          max-w-7xl
+          mx-auto
+          px-6
+          py-12
+          grid
+          lg:grid-cols-3
+          gap-10
+        "
+      >
+
+        {/* LEFT SIDE */}
+
+        <div
+          className="
+            lg:col-span-2
+            space-y-10
+          "
+        >
+
+          {/* DESCRIPTION */}
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              p-8
+              shadow-md
+            "
+          >
+
+            <h2
+              className="
+                text-3xl
+                font-bold
+                mb-6
+                text-gray-800
+              "
+            >
+
+              Description
+
+            </h2>
+
+            <p
+              className="
+                text-gray-700
+                leading-8
+                text-lg
+              "
+            >
+
+              {property.description}
+
+            </p>
+
+          </div>
+
+          {/* DETAILS */}
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              p-8
+              shadow-md
+            "
+          >
+
+            <h2
+              className="
+                text-3xl
+                font-bold
+                mb-8
+                text-gray-800
+              "
+            >
+
+              Property Details
+
+            </h2>
+
+            <div
+              className="
+                grid
+                md:grid-cols-2
+                gap-6
+              "
+            >
+
+              {/* BEDROOMS */}
+
+              <div
+                className="
+                  bg-orange-50
+                  p-6
+                  rounded-2xl
+                "
+              >
+
+                <p
+                  className="
+                    text-gray-500
+                    mb-2
+                  "
+                >
+
+                  Bedrooms
+
+                </p>
+
+                <h3
+                  className="
+                    text-3xl
+                    font-bold
+                  "
+                >
+
+                  {property.bedrooms || 0}
+
+                </h3>
+
+              </div>
+
+              {/* BATHROOMS */}
+
+              <div
+                className="
+                  bg-orange-50
+                  p-6
+                  rounded-2xl
+                "
+              >
+
+                <p
+                  className="
+                    text-gray-500
+                    mb-2
+                  "
+                >
+
+                  Bathrooms
+
+                </p>
+
+                <h3
+                  className="
+                    text-3xl
+                    font-bold
+                  "
+                >
+
+                  {property.bathrooms || 0}
+
+                </h3>
+
+              </div>
+
+              {/* TYPE */}
+
+              <div
+                className="
+                  bg-orange-50
+                  p-6
+                  rounded-2xl
+                "
+              >
+
+                <p
+                  className="
+                    text-gray-500
+                    mb-2
+                  "
+                >
+
+                  Property Type
+
+                </p>
+
+                <h3
+                  className="
+                    text-2xl
+                    font-bold
+                  "
+                >
+
+                  {property.type ||
+                    "House"}
+
+                </h3>
+
+              </div>
+
+              {/* STATUS */}
+
+              <div
+                className="
+                  bg-orange-50
+                  p-6
+                  rounded-2xl
+                "
+              >
+
+                <p
+                  className="
+                    text-gray-500
+                    mb-2
+                  "
+                >
+
+                  Status
+
+                </p>
+
+                <h3
+                  className="
+                    text-2xl
+                    font-bold
+                    text-green-600
+                  "
+                >
+
+                  {property.status ||
+                    "Available"}
+
+                </h3>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* REVIEWS */}
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              p-8
+              shadow-md
+            "
+          >
+
+            <div
+              className="
+                flex
+                justify-between
+                items-center
+                mb-8
+              "
+            >
+
+              <h2
+                className="
+                  text-3xl
+                  font-bold
+                  text-gray-800
+                "
+              >
+
+                Reviews
+
+              </h2>
+
+              <div
+                className="
+                  bg-orange-100
+                  text-orange-600
+                  px-4
+                  py-2
+                  rounded-full
+                  font-semibold
+                "
+              >
+
+                {reviews?.length || 0}
+                {" "}
+                Reviews
+
+              </div>
+
+            </div>
+
+            <ReviewsList
+              reviews={
+                reviews || []
+              }
+            />
+
+          </div>
+
+        </div>
+
+        {/* RIGHT SIDE */}
+
+        <div className="space-y-8">
+
+          {/* PRICE CARD */}
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              p-8
+              shadow-md
+              sticky
+              top-28
+            "
+          >
+
+            <h2
+              className="
+                text-5xl
+                font-extrabold
+                text-orange-500
+                mb-2
+              "
+            >
+
+              Ksh {property.price}
+
+            </h2>
+
+            <p
+              className="
+                text-gray-500
+                mb-8
+              "
+            >
+
+              Per Month
+
+            </p>
+
+            {/* CHAT */}
+
+            <Link
+              href={`/chat/${property.user_id}`}
+
+              className="
+                block
+                w-full
+                bg-orange-500
+                hover:bg-orange-600
+                text-white
+                text-center
+                py-4
+                rounded-2xl
+                font-bold
+                text-lg
+                transition
+                mb-4
+              "
+            >
+
+              Chat with Landlord
+
+            </Link>
+
+            {/* CALL */}
+
+            <a
+              href={`tel:${
+                property.phone ||
+                "+254700000000"
+              }`}
+
+              className="
+                block
+                w-full
+                bg-yellow-500
+                hover:bg-yellow-600
+                text-white
+                text-center
+                py-4
+                rounded-2xl
+                font-bold
+                text-lg
+                transition
+                mb-4
+              "
+            >
+
+              Call Landlord
+
+            </a>
+
+            {/* WHATSAPP */}
+
+            <a
+              href={`https://wa.me/${
+                property.whatsapp ||
+                "254700000000"
+              }`}
+
+              target="_blank"
+
+              className="
+                block
+                w-full
+                bg-green-500
+                hover:bg-green-600
+                text-white
+                text-center
+                py-4
+                rounded-2xl
+                font-bold
+                text-lg
+                transition
+              "
+            >
+
+              WhatsApp Landlord
+
+            </a>
+
+          </div>
+
+        </div>
+
+      </section>
 
     </main>
-
   )
 }

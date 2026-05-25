@@ -1,165 +1,324 @@
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
+"use client"
 
-import PaymentForm from '@/components/PaymentForm'
+import { useState } from "react"
+import Link from "next/link"
 
 const plans = [
-
   {
-    role: 'Tenant',
+    title: "Tenant",
     price: 100,
-    color: 'bg-blue-500'
+    color: "bg-orange-100",
+    button: "bg-orange-500",
+    features: [
+      "Browse properties",
+      "Contact landlords",
+      "Save favorite homes",
+      "30-day free trial",
+    ],
   },
 
   {
-    role: 'Dealer',
+    title: "Dealer",
     price: 200,
-    color: 'bg-purple-500'
+    color: "bg-yellow-100",
+    button: "bg-yellow-500",
+    features: [
+      "Advertise household goods",
+      "Reach new customers",
+      "Showcase services",
+      "30-day free trial",
+    ],
   },
 
   {
-    role: 'Mover',
+    title: "Mover",
     price: 300,
-    color: 'bg-green-500'
+    color: "bg-amber-100",
+    button: "bg-amber-600",
+    features: [
+      "List moving services",
+      "Connect with tenants",
+      "Receive moving requests",
+      "30-day free trial",
+    ],
   },
 
   {
-    role: 'Landlord',
+    title: "Landlord",
     price: 400,
-    color: 'bg-orange-500'
+    color: "bg-orange-200",
+    button: "bg-orange-600",
+    features: [
+      "Upload properties",
+      "Manage tenants",
+      "Track listings",
+      "30-day free trial",
+    ],
   },
 
   {
-    role: 'House Owner',
+    title: "House Owner",
     price: 500,
-    color: 'bg-red-500'
-  }
-
+    color: "bg-yellow-200",
+    button: "bg-yellow-700",
+    features: [
+      "Sell or rent homes",
+      "Connect with buyers",
+      "Premium visibility",
+      "30-day free trial",
+    ],
+  },
 ]
 
 export default function MembershipPage() {
 
+  const [loading, setLoading] = useState(false)
+
+  const handlePayment = async (
+    amount: number,
+    plan: string
+  ) => {
+
+    const phone = prompt(
+      "Enter Mpesa Phone Number\nExample: 254712345678"
+    )
+
+    if (!phone) return
+
+    try {
+
+      setLoading(true)
+
+      const response = await fetch(
+        "/api/mpesa/stkpush",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            phone,
+            amount,
+            plan,
+          }),
+        }
+      )
+
+      const data = await response.json()
+
+      console.log(data)
+
+      if (
+        data.ResponseCode === "0"
+      ) {
+
+        alert(
+          "STK Push sent successfully.\nCheck your phone and enter Mpesa PIN."
+        )
+
+      } else {
+
+        alert(
+          data.errorMessage ||
+          "Payment request failed."
+        )
+      }
+
+    } catch (error) {
+
+      console.log(error)
+
+      alert(
+        "Something went wrong."
+      )
+
+    } finally {
+
+      setLoading(false)
+    }
+  }
+
   return (
 
-    <main className="bg-orange-50 min-h-screen">
+    <main className="min-h-screen bg-orange-50 py-16 px-6">
 
-      <Navbar />
+      {/* HEADER */}
 
-      <section className="max-w-7xl mx-auto px-6 py-20">
+      <section className="max-w-5xl mx-auto text-center mb-14">
 
-        <div className="text-center mb-20">
+        <h1 className="text-5xl font-bold text-orange-600 mb-4">
+          Sereni Homes Membership
+        </h1>
 
-          <h1 className="text-6xl font-bold text-orange-500 mb-6">
+        <p className="text-gray-700 text-lg max-w-2xl mx-auto">
+          Join Sereni Homes and connect with
+          tenants, landlords, movers,
+          house owners, and dealers in a warm,
+          trusted housing community.
+        </p>
 
-            Sereni Homes Membership
+      </section>
 
-          </h1>
+      {/* PLANS */}
 
-          <p className="text-2xl text-gray-600 max-w-3xl mx-auto">
+      <section className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
 
-            Enjoy a 30-day free trial then subscribe
-            to continue accessing Sereni Homes services.
+        {plans.map((plan, index) => (
 
-          </p>
+          <div
+            key={index}
+            className={`${plan.color} rounded-3xl shadow-lg p-8 flex flex-col justify-between`}
+          >
 
-        </div>
+            <div>
 
-        {/* PRICING */}
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                {plan.title}
+              </h2>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8">
+              <p className="text-5xl font-bold text-orange-700 mb-2">
+                Ksh {plan.price}
+              </p>
 
-          {plans.map((plan) => (
+              <p className="text-gray-600 mb-6">
+                per month after 30-day free trial
+              </p>
 
-            <div
-              key={plan.role}
-              className="bg-white rounded-3xl shadow-lg overflow-hidden"
+              <ul className="space-y-3 mb-8">
+
+                {plan.features.map((feature, i) => (
+
+                  <li
+                    key={i}
+                    className="flex items-center gap-2 text-gray-700"
+                  >
+                    ✅ {feature}
+                  </li>
+
+                ))}
+
+              </ul>
+
+            </div>
+
+            <button
+              onClick={() =>
+                handlePayment(
+                  plan.price,
+                  plan.title
+                )
+              }
+              disabled={loading}
+              className={`${plan.button} text-white py-3 rounded-xl font-semibold hover:opacity-90 transition`}
             >
 
-              <div className={`${plan.color} text-white p-6 text-center`}>
+              {loading
+                ? "Processing..."
+                : `Pay Ksh ${plan.price}`}
 
-                <h2 className="text-3xl font-bold">
-                  {plan.role}
-                </h2>
+            </button>
 
-              </div>
+          </div>
 
-              <div className="p-8 text-center">
+        ))}
 
-                <h3 className="text-5xl font-bold text-orange-500 mb-6">
+      </section>
 
-                  Ksh {plan.price}
+      {/* MANUAL PAYMENT */}
 
-                </h3>
+      <section className="max-w-4xl mx-auto mt-20 bg-white rounded-3xl shadow-md p-10">
 
-                <p className="text-gray-600 mb-8">
+        <h2 className="text-3xl font-bold text-orange-600 mb-6 text-center">
+          Alternative Payment Method
+        </h2>
 
-                  Per Month
+        <div className="space-y-4 text-center text-gray-700 text-lg">
 
-                </p>
+          <p>
+            You can also pay manually via Mpesa:
+          </p>
 
-                <div className="space-y-4 mb-10 text-left">
+          <div className="bg-orange-100 rounded-2xl p-6">
 
-                  <p>✅ 30-Day Free Trial</p>
-                  <p>✅ Unlimited Access</p>
-                  <p>✅ Property Services</p>
-                  <p>✅ Sereni Homes Support</p>
-
-                </div>
-
-                <button className="btn-primary w-full">
-
-                  Choose Plan
-
-                </button>
-
-              </div>
-
-            </div>
-
-          ))}
-
-        </div>
-
-        {/* MPESA */}
-
-        <div className="bg-white rounded-3xl shadow-xl p-12 mt-20 text-center">
-
-          <h2 className="text-4xl font-bold text-orange-500 mb-8">
-
-            Mpesa Payment Instructions
-
-          </h2>
-
-          <div className="max-w-2xl mx-auto text-lg text-gray-700 space-y-6">
-
-            <p>
-
-              Send payment via Mpesa to:
-
+            <p className="font-semibold text-xl mb-2">
+              Mpesa Number
             </p>
 
-            <div className="bg-orange-100 text-orange-600 text-4xl font-bold py-6 rounded-2xl">
-
+            <p className="text-3xl font-bold text-orange-700">
               +254114941687
-
-            </div>
-
-            <p>
-
-              After payment, submit your Mpesa
-              transaction code to activate your membership.
-
             </p>
 
           </div>
 
+          <p>
+            After payment, contact support
+            for account activation.
+          </p>
+
         </div>
 
-      <PaymentForm />
+      </section>
 
-</section>
+      {/* SUPPORT */}
 
-      <Footer />
+      <section className="max-w-4xl mx-auto mt-16 bg-white rounded-3xl shadow-md p-10">
+
+        <h2 className="text-3xl font-bold text-orange-600 mb-8 text-center">
+          Need Help?
+        </h2>
+
+        <div className="grid md:grid-cols-2 gap-8">
+
+          <a
+            href="https://wa.me/254115416729"
+            target="_blank"
+            className="bg-green-500 hover:bg-green-600 text-white p-6 rounded-2xl text-center transition"
+          >
+
+            <h3 className="text-2xl font-bold mb-2">
+              WhatsApp Support
+            </h3>
+
+            <p>
+              +254115416729
+            </p>
+
+          </a>
+
+          <a
+            href="mailto:ochiengnevo8@gmail.com"
+            className="bg-orange-500 hover:bg-orange-600 text-white p-6 rounded-2xl text-center transition"
+          >
+
+            <h3 className="text-2xl font-bold mb-2">
+              Email Support
+            </h3>
+
+            <p>
+              ochiengnevo8@gmail.com
+            </p>
+
+          </a>
+
+        </div>
+
+      </section>
+
+      {/* BACK HOME */}
+
+      <section className="text-center mt-14">
+
+        <Link
+          href="/"
+          className="text-orange-600 font-semibold hover:underline"
+        >
+          ← Back to Home
+        </Link>
+
+      </section>
 
     </main>
   )

@@ -1,27 +1,57 @@
-'use client'
+"use client"
 
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { useRouter }
+from "next/navigation"
+
+import { supabase }
+from "@/lib/supabase"
 
 export default function LogoutButton() {
 
   const router = useRouter()
 
-  const handleLogout = async () => {
+  const handleLogout =
+    async () => {
 
-    await supabase.auth.signOut()
+      const confirmed =
+        confirm(
+          "Are you sure you want to logout?"
+        )
 
-    alert('Logged out successfully.')
+      if (!confirmed) return
 
-    router.push('/')
-  }
+      const { error } =
+        await supabase.auth.signOut()
+
+      if (error) {
+
+        alert(
+          "Logout failed"
+        )
+
+        return
+      }
+
+      router.push("/login")
+    }
 
   return (
+
     <button
       onClick={handleLogout}
-      className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition"
+      className="
+        bg-red-500
+        hover:bg-red-600
+        text-white
+        px-5
+        py-3
+        rounded-xl
+        font-semibold
+      "
     >
+
       Logout
+
     </button>
   )
 }

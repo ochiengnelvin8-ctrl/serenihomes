@@ -1,22 +1,21 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
-
-import { supabase } from '@/lib/supabase'
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 
 export default function LoginPage() {
 
   const router = useRouter()
 
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] =
+    useState("")
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [password, setPassword] =
+    useState("")
+
+  const [loading, setLoading] =
+    useState(false)
 
   const handleLogin = async (
     e: React.FormEvent
@@ -24,158 +23,132 @@ export default function LoginPage() {
 
     e.preventDefault()
 
-    setLoading(true)
-
     try {
 
-      const { data, error } =
+      setLoading(true)
+
+      const { error, data } =
         await supabase.auth.signInWithPassword({
+
           email,
-          password
+          password,
         })
 
       if (error) {
+
         alert(error.message)
-        setLoading(false)
+
         return
       }
 
-      if (!data.user) {
-        alert('Login failed.')
-        setLoading(false)
-        return
-      }
+      // GET PROFILE
 
-      // GET USER ROLE
-      const { data: userData, error: userError } =
+      const { data: profile } =
         await supabase
-          .from('users')
-          .select('*')
-          .eq('id', data.user.id)
+          .from("profiles")
+          .select("*")
+          .eq(
+            "id",
+            data.user.id
+          )
           .single()
 
-      if (userError) {
-        alert(userError.message)
-        setLoading(false)
-        return
-      }
+      // REDIRECT BY ROLE
 
-      alert('Login successful!')
+      switch (profile?.role) {
 
-      // ROLE-BASED REDIRECTS
-      switch (userData.role) {
-
-        case 'tenant':
-          router.push('/dashboard/tenant')
+        case "landlord":
+          router.push(
+            "/dashboard/landlord"
+          )
           break
 
-        case 'dealer':
-          router.push('/dashboard/dealer')
+        case "dealer":
+          router.push(
+            "/dashboard/dealer"
+          )
           break
 
-        case 'mover':
-          router.push('/dashboard/mover')
+        case "mover":
+          router.push(
+            "/dashboard/mover"
+          )
           break
 
-        case 'landlord':
-          router.push('/dashboard/landlord')
-          break
-
-        case 'owner':
-          router.push('/dashboard/owner')
+        case "owner":
+          router.push(
+            "/dashboard/owner"
+          )
           break
 
         default:
-          router.push('/')
+          router.push(
+            "/dashboard/tenant"
+          )
       }
 
-    } catch (err) {
+    } catch (error) {
 
-      alert('Something went wrong.')
+      console.log(error)
 
+    } finally {
+
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
-    <main className="bg-orange-50 min-h-screen">
 
-      <Navbar />
+    <main className="min-h-screen bg-orange-50 flex items-center justify-center px-6">
 
-      <section className="flex items-center justify-center py-20 px-6">
+      <div className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-lg">
 
-        <div className="bg-white shadow-2xl rounded-3xl p-10 w-full max-w-md">
+        <h1 className="text-4xl font-bold text-orange-600 text-center mb-8">
+          Welcome Back
+        </h1>
 
-          <div className="text-center mb-10">
+        <form
+          onSubmit={handleLogin}
+          className="space-y-5"
+        >
 
-            <h1 className="text-4xl font-bold text-orange-500 mb-4">
-              Welcome Back
-            </h1>
+          <input
+            type="email"
+            placeholder="Email"
+            required
+            value={email}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
+            className="w-full p-4 rounded-xl border"
+          />
 
-            <p className="text-gray-600">
-              Login to continue using Sereni Homes.
-            </p>
+          <input
+            type="password"
+            placeholder="Password"
+            required
+            value={password}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
+            className="w-full p-4 rounded-xl border"
+          />
 
-          </div>
-
-          <form
-            onSubmit={handleLogin}
-            className="space-y-6"
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-xl font-bold"
           >
 
-            <input
-              type="email"
-              placeholder="Email Address"
-              value={email}
-              onChange={(e) =>
-                setEmail(e.target.value)
-              }
-              className="w-full border border-gray-300 rounded-xl p-4"
-              required
-            />
+            {loading
+              ? "Logging In..."
+              : "Login"}
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) =>
-                setPassword(e.target.value)
-              }
-              className="w-full border border-gray-300 rounded-xl p-4"
-              required
-            />
+          </button>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full"
-            >
-              {loading
-                ? 'Logging in...'
-                : 'Login'}
-            </button>
+        </form>
 
-          </form>
-
-          <div className="mt-8 text-center">
-
-            <p className="text-gray-600">
-              Don't have an account?
-            </p>
-
-            <Link
-              href="/register"
-              className="text-orange-500 font-bold hover:underline"
-            >
-              Create Account
-            </Link>
-
-          </div>
-        </div>
-      </section>
-
-      <Footer />
+      </div>
 
     </main>
   )
