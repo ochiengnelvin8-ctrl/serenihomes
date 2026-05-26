@@ -1,14 +1,21 @@
+import {
+  Star,
+} from "lucide-react"
+
 interface Review {
 
-  id: number
-
-  user_name: string
-
-  comment: string
+  id: string
 
   rating: number
 
+  comment: string
+
   created_at: string
+
+  profiles?: {
+
+    full_name?: string
+  }
 }
 
 interface ReviewsListProps {
@@ -17,16 +24,32 @@ interface ReviewsListProps {
 }
 
 export default function ReviewsList({
+
   reviews,
+
 }: ReviewsListProps) {
 
-  if (!reviews.length) {
+  if (reviews.length === 0) {
 
     return (
 
-      <div className="text-gray-500">
+      <div
+        className="
+          text-center
+          py-10
+        "
+      >
 
-        No reviews yet.
+        <p
+          className="
+            text-gray-500
+            text-lg
+          "
+        >
+
+          No reviews yet.
+
+        </p>
 
       </div>
     )
@@ -34,60 +57,118 @@ export default function ReviewsList({
 
   return (
 
-    <div className="space-y-6">
+    <div
+      className="
+        space-y-6
+      "
+    >
 
-      {reviews.map((review) => (
+      {reviews.map(
+        (review) => (
 
-        <div
-          key={review.id}
-          className="
-            bg-orange-50
-            rounded-2xl
-            p-5
-            border
-          "
-        >
+          <div
+            key={review.id}
 
-          {/* HEADER */}
+            className="
+              bg-gray-50
+              rounded-3xl
+              p-6
+            "
+          >
 
-          <div className="flex justify-between items-center mb-3">
+            <div
+              className="
+                flex
+                items-center
+                justify-between
+                mb-4
+              "
+            >
 
-            <h3 className="font-bold text-lg">
+              <div>
 
-              {review.user_name ||
-                "Anonymous"}
+                <h3
+                  className="
+                    font-bold
+                    text-lg
+                  "
+                >
 
-            </h3>
+                  {
+                    review
+                      .profiles
+                      ?.full_name ||
 
-            <span className="text-orange-500 font-semibold">
+                    "Anonymous User"
+                  }
 
-              ⭐ {review.rating}/5
+                </h3>
 
-            </span>
+                <p
+                  className="
+                    text-sm
+                    text-gray-500
+                  "
+                >
+
+                  {new Date(
+                    review.created_at
+                  ).toLocaleDateString()}
+
+                </p>
+
+              </div>
+
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-1
+                "
+              >
+
+                {Array.from({
+                  length:
+                    review.rating,
+                }).map(
+                  (
+                    _,
+                    index
+                  ) => (
+
+                    <Star
+                      key={index}
+
+                      size={18}
+
+                      className="
+                        fill-yellow-400
+                        text-yellow-400
+                      "
+                    />
+                  )
+                )}
+
+              </div>
+
+            </div>
+
+            <p
+              className="
+                text-gray-700
+                leading-7
+              "
+            >
+
+              {
+                review.comment
+              }
+
+            </p>
 
           </div>
-
-          {/* COMMENT */}
-
-          <p className="text-gray-700 leading-7">
-
-            {review.comment}
-
-          </p>
-
-          {/* DATE */}
-
-          <p className="text-sm text-gray-500 mt-4">
-
-            {new Date(
-              review.created_at
-            ).toLocaleDateString()}
-
-          </p>
-
-        </div>
-
-      ))}
+        )
+      )}
 
     </div>
   )

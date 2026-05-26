@@ -3,24 +3,27 @@
 import { useEffect, useState }
 from "react"
 
-import { Heart }
-from "lucide-react"
+import {
+  Heart,
+} from "lucide-react"
 
 import { supabase }
 from "@/lib/supabase"
 
 interface Props {
 
-  propertyId: number
+  propertyId: string
 }
 
 export default function FavoriteButton({
+
   propertyId,
+
 }: Props) {
 
   const [
-    isFavorite,
-    setIsFavorite,
+    favorited,
+    setFavorited,
   ] = useState(false)
 
   const [
@@ -37,24 +40,39 @@ export default function FavoriteButton({
   async function checkFavorite() {
 
     const {
-      data: { user },
+      data: {
+        user,
+      },
     } =
       await supabase.auth.getUser()
 
     if (!user) return
 
-    const { data } =
+    const {
+      data,
+    } =
       await supabase
+
         .from("favorites")
+
         .select("*")
-        .eq("user_id", user.id)
+
+        .eq(
+          "user_id",
+          user.id
+        )
+
         .eq(
           "property_id",
           propertyId
         )
+
         .single()
 
-    setIsFavorite(!!data)
+    if (data) {
+
+      setFavorited(true)
+    }
   }
 
   async function toggleFavorite() {
@@ -62,7 +80,9 @@ export default function FavoriteButton({
     setLoading(true)
 
     const {
-      data: { user },
+      data: {
+        user,
+      },
     } =
       await supabase.auth.getUser()
 
@@ -77,32 +97,43 @@ export default function FavoriteButton({
       return
     }
 
-    if (isFavorite) {
+    if (favorited) {
 
       await supabase
+
         .from("favorites")
+
         .delete()
-        .eq("user_id", user.id)
+
+        .eq(
+          "user_id",
+          user.id
+        )
+
         .eq(
           "property_id",
           propertyId
         )
 
-      setIsFavorite(false)
+      setFavorited(false)
 
     } else {
 
       await supabase
+
         .from("favorites")
-        .insert({
 
-          user_id: user.id,
+        .insert([
+          {
+            user_id:
+              user.id,
 
-          property_id:
-            propertyId,
-        })
+            property_id:
+              propertyId,
+          },
+        ])
 
-      setIsFavorite(true)
+      setFavorited(true)
     }
 
     setLoading(false)
@@ -111,35 +142,39 @@ export default function FavoriteButton({
   return (
 
     <button
-      onClick={toggleFavorite}
+      onClick={
+        toggleFavorite
+      }
 
       disabled={loading}
 
       className="
+        flex
+        items-center
+        justify-center
+        w-14
+        h-14
+        rounded-full
         bg-white
         shadow-md
-        p-3
-        rounded-full
-        hover:scale-110
+        hover:scale-105
         transition
       "
     >
 
       <Heart
 
-        size={24}
+        size={26}
 
-        className={`
-          transition
+        className={
 
-          ${
-            isFavorite
+          favorited
 
-              ? "fill-red-500 text-red-500"
+            ? "fill-red-500 text-red-500"
 
-              : "text-gray-500"
-          }
-        `}
+            : "text-gray-500"
+        }
+
       />
 
     </button>

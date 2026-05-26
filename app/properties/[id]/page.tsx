@@ -1,6 +1,13 @@
+"use client"
+
+import {
+  useEffect,
+  useState,
+} from "react"
+
 import Image from "next/image"
+
 import Link from "next/link"
-import { notFound } from "next/navigation"
 
 import {
   MapPin,
@@ -9,14 +16,17 @@ import {
   ArrowLeft,
 } from "lucide-react"
 
+import { useParams }
+from "next/navigation"
+
 import { supabase }
 from "@/lib/supabase"
 
-import ReviewsList
-from "@/components/ReviewsList"
-
 import ReviewForm
 from "@/components/ReviewForm"
+
+import ReviewsList
+from "@/components/ReviewsList"
 
 import FavoriteButton
 from "@/components/FavoriteButton"
@@ -24,124 +34,268 @@ from "@/components/FavoriteButton"
 import PropertyGallery
 from "@/components/PropertyGallery"
 
-interface PageProps {
+interface Property {
 
-  params: Promise<{
-    id: string
-  }>
+  id: string
+
+  title: string
+
+  description: string
+
+  location: string
+
+  price: string
+
+  image_url: string
+
+  category: string
+
+  bedrooms?: number
+
+  bathrooms?: number
+
+  created_at?: string
 }
 
-export default async function PropertyPage({
-  params,
-}: PageProps) {
+interface Review {
 
-  const { id } =
-    await params
+  id: string
+
+  rating: number
+
+  comment: string
+
+  created_at: string
+
+  profiles?: {
+
+    full_name?: string
+  }
+}
+
+export default function PropertyDetailsPage() {
+
+  const params =
+    useParams()
+
+  const id =
+    params.id as string
+
+  const [
+    property,
+    setProperty,
+  ] = useState<Property | null>(
+    null
+  )
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true)
+
+  const [
+    reviews,
+    setReviews,
+  ] = useState<Review[]>([])
+
+  const [
+    galleryImages,
+    setGalleryImages,
+  ] = useState<string[]>([])
 
   // FETCH PROPERTY
 
-  const {
-    data: property,
-    error,
-  } =
-    await supabase
+  async function fetchProperty() {
 
-      .from("properties")
+    setLoading(true)
 
-      .select("*")
+    // PROPERTY
 
-      .eq("id", id)
+    const {
+      data,
+      error,
+    } =
+      await supabase
 
-      .single()
+        .from("properties")
 
-  if (
-    error ||
-    !property
-  ) {
+        .select("*")
 
-    notFound()
-  }
+        .eq("id", id)
 
-  // FETCH REVIEWS
+        .single()
 
-  const {
-    data: reviews,
-  } =
-    await supabase
+    if (error) {
 
-      .from("reviews")
+      console.error(error)
 
-      .select("*")
+      setLoading(false)
 
-      .eq(
-        "property_id",
-        id
-      )
+      return
+    }
 
-      .order(
-        "created_at",
+    setProperty(data)
 
-        {
-          ascending: false,
-        }
-      )
+    // REVIEWS
 
-  // FETCH GALLERY IMAGES
+    const {
+      data: reviewsData,
+    } =
+      await supabase
 
-  const {
-    data: galleryImages,
-  } =
-    await supabase
+        .from("reviews")
 
-      .from("property_images")
+        .select(`
+          *,
+          profiles (
+            full_name
+          )
+        `)
 
-      .select("*")
-
-      .eq(
-        "property_id",
-        id
-      )
-
-  // BUILD IMAGE ARRAY
-
-  const images =
-
-    galleryImages &&
-    galleryImages.length > 0
-
-      ? galleryImages.map(
-          (img) =>
-            img.image_url
+        .eq(
+          "property_id",
+          id
         )
 
-      : [
-          property.image_url ||
+        .order(
+          "created_at",
 
-          "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?q=80&w=1200&auto=format&fit=crop"
-        ]
+          {
+            ascending: false,
+          }
+        )
 
-  // RELATED PROPERTIES
+    setReviews(
+      reviewsData || []
+    )
 
-  const {
-    data: relatedProperties,
-  } =
-    await supabase
+    // GALLERY IMAGES
 
-      .from("properties")
+    const {
+      data: galleryData,
+    } =
+      await supabase
 
-      .select("*")
+        .from(
+          "property_images"
+        )
 
-      .neq(
-        "id",
-        id
+        .select("*")
+
+        .eq(
+          "property_id",
+          id
+        )
+
+    if (galleryData) {
+
+      setGalleryImages(
+
+        galleryData.map(
+          (item) =>
+
+            item.image_url
+        )
       )
+    }
 
-      .eq(
-        "category",
-        property.category
-      )
+    setLoading(false)
+  }
 
-      .limit(3)
+  useEffect(() => {
+
+    if (id) {
+
+      fetchProperty()
+    }
+
+  }, [id])
+
+  // LOADING
+
+  if (loading) {
+
+    return (
+
+      <main
+        className="
+          min-h-screen
+          flex
+          items-center
+          justify-center
+          bg-orange-50
+        "
+      >
+
+        <h1
+          className="
+            text-3xl
+            font-bold
+            text-orange-500
+          "
+        >
+
+          Loading property...
+
+        </h1>
+
+      </main>
+    )
+  }
+
+  // NOT FOUND
+
+  if (!property) {
+
+    return (
+
+      <main
+        className="
+          min-h-screen
+          flex
+          flex-col
+          items-center
+          justify-center
+          bg-orange-50
+          px-6
+        "
+      >
+
+        <h1
+          className="
+            text-5xl
+            font-extrabold
+            mb-4
+          "
+        >
+
+          Property Not Found
+
+        </h1>
+
+        <Link
+          href="/properties"
+
+          className="
+            mt-5
+            bg-orange-500
+            hover:bg-orange-600
+            text-white
+            px-6
+            py-4
+            rounded-2xl
+            font-semibold
+            transition
+          "
+        >
+
+          Back to Properties
+
+        </Link>
+
+      </main>
+    )
+  }
 
   return (
 
@@ -149,128 +303,60 @@ export default async function PropertyPage({
       className="
         min-h-screen
         bg-orange-50
-        pb-20
+        px-6
+        py-10
       "
     >
-
-      {/* TOP BAR */}
 
       <div
         className="
           max-w-7xl
           mx-auto
-          px-6
-          pt-8
-          flex
-          justify-between
-          items-center
         "
       >
+
+        {/* BACK BUTTON */}
 
         <Link
           href="/properties"
 
           className="
-            flex
+            inline-flex
             items-center
-            gap-2
+            gap-3
+            mb-8
             text-orange-500
+            hover:text-orange-600
             font-semibold
-            hover:underline
           "
         >
 
-          <ArrowLeft size={20} />
+          <ArrowLeft size={22} />
 
           Back to Properties
 
         </Link>
 
-        <FavoriteButton
-          propertyId={property.id}
-        />
-
-      </div>
-
-      {/* GALLERY */}
-
-      <section
-        className="
-          max-w-7xl
-          mx-auto
-          px-6
-          pt-8
-        "
-      >
-
-        <PropertyGallery
-          images={images}
-        />
-
-      </section>
-
-      {/* PROPERTY INFO */}
-
-      <section
-        className="
-          max-w-7xl
-          mx-auto
-          px-6
-          py-12
-          grid
-          lg:grid-cols-3
-          gap-10
-        "
-      >
-
-        {/* LEFT */}
+        {/* TITLE */}
 
         <div
           className="
-            lg:col-span-2
+            flex
+            flex-col
+            lg:flex-row
+            lg:items-center
+            lg:justify-between
+            gap-5
+            mb-8
           "
         >
 
-          {/* TITLE */}
-
-          <div
-            className="
-              mb-8
-            "
-          >
-
-            <div
-              className="
-                flex
-                items-center
-                gap-4
-                mb-4
-              "
-            >
-
-              <span
-                className="
-                  bg-orange-500
-                  text-white
-                  px-5
-                  py-2
-                  rounded-full
-                  text-sm
-                  font-bold
-                "
-              >
-
-                {property.category}
-
-              </span>
-
-            </div>
+          <div>
 
             <h1
               className="
                 text-5xl
                 font-extrabold
-                text-gray-900
                 mb-4
               "
             >
@@ -283,15 +369,13 @@ export default async function PropertyPage({
               className="
                 flex
                 items-center
-                gap-2
+                gap-3
                 text-gray-600
                 text-lg
               "
             >
 
-              <MapPin
-                size={20}
-              />
+              <MapPin size={22} />
 
               {property.location}
 
@@ -299,217 +383,29 @@ export default async function PropertyPage({
 
           </div>
 
-          {/* FEATURES */}
-
           <div
             className="
-              bg-white
-              rounded-3xl
-              p-8
-              shadow-md
-              mb-10
+              flex
+              items-center
+              gap-4
             "
           >
 
-            <div
-              className="
-                grid
-                md:grid-cols-3
-                gap-8
-              "
-            >
-
-              <div
-                className="
-                  flex
-                  items-center
-                  gap-4
-                "
-              >
-
-                <BedDouble
-                  size={32}
-                  className="
-                    text-orange-500
-                  "
-                />
-
-                <div>
-
-                  <p
-                    className="
-                      text-gray-500
-                    "
-                  >
-
-                    Bedrooms
-
-                  </p>
-
-                  <h3
-                    className="
-                      text-2xl
-                      font-bold
-                    "
-                  >
-
-                    {property.bedrooms || 0}
-
-                  </h3>
-
-                </div>
-
-              </div>
-
-              <div
-                className="
-                  flex
-                  items-center
-                  gap-4
-                "
-              >
-
-                <Bath
-                  size={32}
-                  className="
-                    text-orange-500
-                  "
-                />
-
-                <div>
-
-                  <p
-                    className="
-                      text-gray-500
-                    "
-                  >
-
-                    Bathrooms
-
-                  </p>
-
-                  <h3
-                    className="
-                      text-2xl
-                      font-bold
-                    "
-                  >
-
-                    {property.bathrooms || 0}
-
-                  </h3>
-
-                </div>
-
-              </div>
-
-              <div>
-
-                <p
-                  className="
-                    text-gray-500
-                    mb-2
-                  "
-                >
-
-                  Monthly Rent
-
-                </p>
-
-                <h2
-                  className="
-                    text-4xl
-                    font-extrabold
-                    text-orange-500
-                  "
-                >
-
-                  Ksh {property.price}
-
-                </h2>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* DESCRIPTION */}
-
-          <div
-            className="
-              bg-white
-              rounded-3xl
-              p-8
-              shadow-md
-              mb-10
-            "
-          >
-
-            <h2
-              className="
-                text-3xl
-                font-bold
-                mb-6
-              "
-            >
-
-              Description
-
-            </h2>
-
-            <p
-              className="
-                text-gray-700
-                leading-9
-                text-lg
-              "
-            >
-
-              {property.description}
-
-            </p>
-
-          </div>
-
-          {/* REVIEWS */}
-
-          <div
-            className="
-              bg-white
-              rounded-3xl
-              p-8
-              shadow-md
-            "
-          >
-
-            <h2
-              className="
-                text-3xl
-                font-bold
-                mb-8
-              "
-            >
-
-              Reviews
-
-            </h2>
-
-            <ReviewForm
-              propertyId={property.id}
+            <FavoriteButton
+              propertyId={
+                property.id
+              }
             />
 
             <div
               className="
-                mt-10
+                text-4xl
+                font-extrabold
+                text-orange-500
               "
             >
 
-              <ReviewsList
-                reviews={
-                  reviews || []
-                }
-              />
+              Ksh {property.price}
 
             </div>
 
@@ -517,208 +413,267 @@ export default async function PropertyPage({
 
         </div>
 
-        {/* RIGHT SIDEBAR */}
+        {/* GALLERY */}
 
-        <div>
+        <PropertyGallery
 
-          {/* CONTACT CARD */}
+          mainImage={
+            property.image_url
+          }
+
+          galleryImages={
+            galleryImages
+          }
+
+        />
+
+        {/* DETAILS */}
+
+        <div
+          className="
+            grid
+            lg:grid-cols-3
+            gap-10
+            mt-12
+          "
+        >
+
+          {/* LEFT */}
 
           <div
             className="
-              bg-white
-              rounded-3xl
-              p-8
-              shadow-md
-              sticky
-              top-24
+              lg:col-span-2
             "
           >
 
-            <h2
+            {/* PROPERTY INFO */}
+
+            <div
               className="
-                text-3xl
-                font-bold
-                mb-6
+                bg-white
+                rounded-3xl
+                shadow-md
+                p-8
+                mb-10
               "
             >
 
-              Interested?
+              <div
+                className="
+                  flex
+                  flex-wrap
+                  gap-5
+                  mb-8
+                "
+              >
 
-            </h2>
+                <div
+                  className="
+                    bg-orange-100
+                    text-orange-600
+                    px-5
+                    py-3
+                    rounded-2xl
+                    font-semibold
+                  "
+                >
 
-            <p
+                  {property.category}
+
+                </div>
+
+                <div
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                    bg-gray-100
+                    px-5
+                    py-3
+                    rounded-2xl
+                  "
+                >
+
+                  <BedDouble
+                    size={20}
+                  />
+
+                  {
+                    property.bedrooms
+                  } Bedrooms
+
+                </div>
+
+                <div
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                    bg-gray-100
+                    px-5
+                    py-3
+                    rounded-2xl
+                  "
+                >
+
+                  <Bath size={20} />
+
+                  {
+                    property.bathrooms
+                  } Bathrooms
+
+                </div>
+
+              </div>
+
+              <h2
+                className="
+                  text-3xl
+                  font-bold
+                  mb-6
+                "
+              >
+
+                Description
+
+              </h2>
+
+              <p
+                className="
+                  text-gray-700
+                  leading-8
+                  text-lg
+                "
+              >
+
+                {
+                  property.description
+                }
+
+              </p>
+
+            </div>
+
+            {/* REVIEWS */}
+
+            <div
               className="
-                text-gray-600
-                leading-8
-                mb-8
+                bg-white
+                rounded-3xl
+                shadow-md
+                p-8
               "
             >
 
-              Contact the landlord
-              today and schedule a
-              property visit.
+              <h2
+                className="
+                  text-3xl
+                  font-bold
+                  mb-8
+                "
+              >
 
-            </p>
+                Reviews
 
-            <button
+              </h2>
+
+              <ReviewForm
+                propertyId={
+                  property.id
+                }
+
+                onReviewAdded={
+                  fetchProperty
+                }
+              />
+
+              <div
+                className="
+                  mt-10
+                "
+              >
+
+                <ReviewsList
+                  reviews={
+                    reviews
+                  }
+                />
+
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* RIGHT SIDEBAR */}
+
+          <div>
+
+            {/* CONTACT CARD */}
+
+            <div
               className="
-                w-full
-                bg-orange-500
-                hover:bg-orange-600
-                text-white
-                py-5
-                rounded-2xl
-                font-bold
-                text-lg
-                transition
+                bg-white
+                rounded-3xl
+                shadow-md
+                p-8
+                sticky
+                top-24
               "
             >
 
-              Contact Landlord
+              <h2
+                className="
+                  text-3xl
+                  font-bold
+                  mb-6
+                "
+              >
 
-            </button>
+                Interested?
+
+              </h2>
+
+              <p
+                className="
+                  text-gray-600
+                  leading-7
+                  mb-8
+                "
+              >
+
+                Contact the landlord to
+                schedule a viewing or
+                ask questions about this
+                property.
+
+              </p>
+
+              <button
+                className="
+                  w-full
+                  bg-orange-500
+                  hover:bg-orange-600
+                  text-white
+                  py-4
+                  rounded-2xl
+                  font-bold
+                  text-lg
+                  transition
+                "
+              >
+
+                Contact Landlord
+
+              </button>
+
+            </div>
 
           </div>
 
         </div>
 
-      </section>
-
-      {/* RELATED PROPERTIES */}
-
-      {relatedProperties &&
-        relatedProperties.length > 0 && (
-
-        <section
-          className="
-            max-w-7xl
-            mx-auto
-            px-6
-            mt-10
-          "
-        >
-
-          <h2
-            className="
-              text-4xl
-              font-extrabold
-              mb-10
-            "
-          >
-
-            Similar Properties
-
-          </h2>
-
-          <div
-            className="
-              grid
-              md:grid-cols-2
-              lg:grid-cols-3
-              gap-8
-            "
-          >
-
-            {relatedProperties.map(
-              (related) => (
-
-                <Link
-                  key={related.id}
-
-                  href={`/properties/${related.id}`}
-                >
-
-                  <div
-                    className="
-                      bg-white
-                      rounded-3xl
-                      overflow-hidden
-                      shadow-md
-                      hover:shadow-xl
-                      transition
-                    "
-                  >
-
-                    <div
-                      className="
-                        relative
-                        h-64
-                      "
-                    >
-
-                      <Image
-                        src={
-                          related.image_url ||
-
-                          "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?q=80&w=1200&auto=format&fit=crop"
-                        }
-
-                        alt={
-                          related.title
-                        }
-
-                        fill
-
-                        className="
-                          object-cover
-                        "
-                      />
-
-                    </div>
-
-                    <div
-                      className="
-                        p-6
-                      "
-                    >
-
-                      <h3
-                        className="
-                          text-2xl
-                          font-bold
-                          mb-3
-                        "
-                      >
-
-                        {related.title}
-
-                      </h3>
-
-                      <p
-                        className="
-                          text-gray-500
-                          mb-4
-                        "
-                      >
-
-                        {related.location}
-
-                      </p>
-
-                      <p
-                        className="
-                          text-orange-500
-                          text-3xl
-                          font-extrabold
-                        "
-                      >
-
-                        Ksh {related.price}
-
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </Link>
-              )
-            )}
-
-          </div>
-
-        </section>
-      )}
+      </div>
 
     </main>
   )

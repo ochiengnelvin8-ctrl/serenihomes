@@ -1,26 +1,38 @@
 "use client"
 
+import Image from "next/image"
+
 import { useState }
 from "react"
 
-import Image
-from "next/image"
-
 interface Props {
 
-  images: string[]
+  mainImage: string
+
+  galleryImages: string[]
 }
 
 export default function PropertyGallery({
-  images,
+
+  mainImage,
+
+  galleryImages,
+
 }: Props) {
 
   const [
     selectedImage,
     setSelectedImage,
   ] = useState(
-    images[0]
+    mainImage
   )
+
+  const allImages = [
+
+    mainImage,
+
+    ...galleryImages,
+  ]
 
   return (
 
@@ -42,9 +54,11 @@ export default function PropertyGallery({
         <Image
           src={selectedImage}
 
-          alt="Property Image"
+          alt="Property"
 
           fill
+
+          priority
 
           className="
             object-cover
@@ -59,13 +73,16 @@ export default function PropertyGallery({
         className="
           grid
           grid-cols-2
-          md:grid-cols-4
+          md:grid-cols-5
           gap-4
         "
       >
 
-        {images.map(
-          (image, index) => (
+        {allImages.map(
+          (
+            image,
+            index
+          ) => (
 
             <button
               key={index}
@@ -85,8 +102,7 @@ export default function PropertyGallery({
                 transition
 
                 ${
-                  selectedImage ===
-                  image
+                  selectedImage === image
 
                     ? "border-orange-500"
 
@@ -98,7 +114,7 @@ export default function PropertyGallery({
               <Image
                 src={image}
 
-                alt={`Image ${index}`}
+                alt="Gallery"
 
                 fill
 
