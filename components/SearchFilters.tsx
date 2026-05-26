@@ -14,15 +14,15 @@ interface Props {
     value: string
   ) => void
 
-  maxPrice: string
+  minPrice: string
 
-  setMaxPrice: (
+  setMinPrice: (
     value: string
   ) => void
 
-  location: string
+  maxPrice: string
 
-  setLocation: (
+  setMaxPrice: (
     value: string
   ) => void
 }
@@ -30,20 +30,16 @@ interface Props {
 export default function SearchFilters({
 
   search,
-
   setSearch,
 
   category,
-
   setCategory,
 
+  minPrice,
+  setMinPrice,
+
   maxPrice,
-
   setMaxPrice,
-
-  location,
-
-  setLocation,
 
 }: Props) {
 
@@ -52,8 +48,8 @@ export default function SearchFilters({
     <div
       className="
         bg-white
-        rounded-3xl
         p-6
+        rounded-3xl
         shadow-md
         mb-10
       "
@@ -62,8 +58,7 @@ export default function SearchFilters({
       <div
         className="
           grid
-          md:grid-cols-2
-          lg:grid-cols-4
+          md:grid-cols-4
           gap-5
         "
       >
@@ -73,7 +68,9 @@ export default function SearchFilters({
         <input
           type="text"
 
-          placeholder="Search properties..."
+          placeholder="
+          Search location or title
+          "
 
           value={search}
 
@@ -85,10 +82,8 @@ export default function SearchFilters({
 
           className="
             border
-            border-gray-200
             rounded-2xl
-            px-5
-            py-4
+            p-4
             outline-none
             focus:ring-2
             focus:ring-orange-500
@@ -108,10 +103,8 @@ export default function SearchFilters({
 
           className="
             border
-            border-gray-200
             rounded-2xl
-            px-5
-            py-4
+            p-4
             outline-none
             focus:ring-2
             focus:ring-orange-500
@@ -140,27 +133,25 @@ export default function SearchFilters({
 
         </select>
 
-        {/* LOCATION */}
+        {/* MIN PRICE */}
 
         <input
-          type="text"
+          type="number"
 
-          placeholder="Location"
+          placeholder="Min Price"
 
-          value={location}
+          value={minPrice}
 
           onChange={(e) =>
-            setLocation(
+            setMinPrice(
               e.target.value
             )
           }
 
           className="
             border
-            border-gray-200
             rounded-2xl
-            px-5
-            py-4
+            p-4
             outline-none
             focus:ring-2
             focus:ring-orange-500
@@ -184,10 +175,8 @@ export default function SearchFilters({
 
           className="
             border
-            border-gray-200
             rounded-2xl
-            px-5
-            py-4
+            p-4
             outline-none
             focus:ring-2
             focus:ring-orange-500

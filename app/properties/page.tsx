@@ -1,16 +1,14 @@
 "use client"
 
-import { useEffect, useState }
-from "react"
+import { useEffect, useState } from "react"
 
-import PropertyCard
-from "@/components/PropertyCard"
+import Link from "next/link"
 
-import SearchFilters
-from "@/components/SearchFilters"
+import { supabase } from "@/lib/supabase"
 
-import { supabase }
-from "@/lib/supabase"
+import PropertyCard from "@/components/PropertyCard"
+
+import SearchFilters from "@/components/SearchFilters"
 
 interface Property {
 
@@ -31,6 +29,8 @@ interface Property {
   bedrooms?: number
 
   bathrooms?: number
+
+  created_at?: string
 }
 
 export default function PropertiesPage() {
@@ -38,11 +38,6 @@ export default function PropertiesPage() {
   const [
     properties,
     setProperties,
-  ] = useState<Property[]>([])
-
-  const [
-    filteredProperties,
-    setFilteredProperties,
   ] = useState<Property[]>([])
 
   const [
@@ -63,8 +58,8 @@ export default function PropertiesPage() {
   ] = useState("")
 
   const [
-    location,
-    setLocation,
+    minPrice,
+    setMinPrice,
   ] = useState("")
 
   const [
@@ -72,33 +67,15 @@ export default function PropertiesPage() {
     setMaxPrice,
   ] = useState("")
 
-  useEffect(() => {
-
-    fetchProperties()
-
-  }, [])
-
-  useEffect(() => {
-
-    filterProperties()
-
-  }, [
-    search,
-    category,
-    location,
-    maxPrice,
-    properties,
-  ])
+  // FETCH PROPERTIES
 
   async function fetchProperties() {
 
     setLoading(true)
 
-    const {
-      data,
-      error,
-    } =
-      await supabase
+    let query =
+
+      supabase
 
         .from("properties")
 
@@ -112,6 +89,55 @@ export default function PropertiesPage() {
           }
         )
 
+    // SEARCH
+
+    if (search) {
+
+      query =
+        query.or(
+          `title.ilike.%${search}%,
+location.ilike.%${search}%`
+        )
+    }
+
+    // CATEGORY
+
+    if (category) {
+
+      query =
+        query.eq(
+          "category",
+          category
+        )
+    }
+
+    // MIN PRICE
+
+    if (minPrice) {
+
+      query =
+        query.gte(
+          "price",
+          minPrice
+        )
+    }
+
+    // MAX PRICE
+
+    if (maxPrice) {
+
+      query =
+        query.lte(
+          "price",
+          maxPrice
+        )
+    }
+
+    const {
+      data,
+      error,
+    } = await query
+
     if (error) {
 
       console.error(error)
@@ -121,86 +147,29 @@ export default function PropertiesPage() {
       return
     }
 
-    setProperties(data || [])
-
-    setFilteredProperties(
+    setProperties(
       data || []
     )
 
     setLoading(false)
   }
 
-  function filterProperties() {
+  // LIVE FILTERING
 
-    let filtered =
-      [...properties]
+  useEffect(() => {
 
-    // SEARCH
+    fetchProperties()
 
-    if (search) {
+  }, [
 
-      filtered =
-        filtered.filter(
-          (property) =>
+    search,
 
-            property.title
-              .toLowerCase()
+    category,
 
-              .includes(
-                search.toLowerCase()
-              )
-        )
-    }
+    minPrice,
 
-    // CATEGORY
-
-    if (category) {
-
-      filtered =
-        filtered.filter(
-          (property) =>
-
-            property.category ===
-            category
-        )
-    }
-
-    // LOCATION
-
-    if (location) {
-
-      filtered =
-        filtered.filter(
-          (property) =>
-
-            property.location
-              .toLowerCase()
-
-              .includes(
-                location.toLowerCase()
-              )
-        )
-    }
-
-    // MAX PRICE
-
-    if (maxPrice) {
-
-      filtered =
-        filtered.filter(
-          (property) =>
-
-            Number(
-              property.price
-            ) <=
-            Number(maxPrice)
-        )
-    }
-
-    setFilteredProperties(
-      filtered
-    )
-  }
+    maxPrice,
+  ])
 
   return (
 
@@ -224,91 +193,91 @@ export default function PropertiesPage() {
 
         <div
           className="
+            flex
+            flex-col
+            md:flex-row
+            md:items-center
+            md:justify-between
+            gap-5
             mb-10
           "
         >
 
-          <h1
+          <div>
+
+            <h1
+              className="
+                text-5xl
+                font-extrabold
+                text-orange-500
+                mb-3
+              "
+            >
+
+              Browse Properties
+
+            </h1>
+
+            <p
+              className="
+                text-gray-600
+                text-lg
+              "
+            >
+
+              Find your perfect home with Sereni Homes.
+
+            </p>
+
+          </div>
+
+          <Link
+            href="/dashboard/landlord"
+
             className="
-              text-5xl
-              font-extrabold
-              text-orange-500
-              mb-3
+              bg-orange-500
+              hover:bg-orange-600
+              text-white
+              px-6
+              py-4
+              rounded-2xl
+              font-semibold
+              transition
             "
           >
 
-            Browse Properties
+            Add Property
 
-          </h1>
-
-          <p
-            className="
-              text-gray-600
-              text-lg
-            "
-          >
-
-            Find your perfect home
-            with advanced filters.
-          </p>
+          </Link>
 
         </div>
 
-        {/* FILTERS */}
+        {/* SEARCH FILTERS */}
 
         <SearchFilters
 
           search={search}
-
           setSearch={setSearch}
 
           category={category}
-
           setCategory={setCategory}
 
-          location={location}
-
-          setLocation={setLocation}
+          minPrice={minPrice}
+          setMinPrice={setMinPrice}
 
           maxPrice={maxPrice}
-
           setMaxPrice={setMaxPrice}
+
         />
-
-        {/* RESULTS */}
-
-        <div
-          className="
-            flex
-            justify-between
-            items-center
-            mb-8
-          "
-        >
-
-          <h2
-            className="
-              text-2xl
-              font-bold
-            "
-          >
-
-            {filteredProperties.length}
-            {" "}
-            Properties Found
-
-          </h2>
-
-        </div>
 
         {/* LOADING */}
 
-        {loading && (
+        {loading ? (
 
           <div
             className="
               text-center
-              py-20
+              py-24
             "
           >
 
@@ -325,18 +294,14 @@ export default function PropertiesPage() {
             </h2>
 
           </div>
-        )}
 
-        {/* EMPTY */}
-
-        {!loading &&
-          filteredProperties.length === 0 && (
+        ) : properties.length === 0 ? (
 
           <div
             className="
               bg-white
               rounded-3xl
-              p-12
+              p-16
               text-center
               shadow-md
             "
@@ -344,33 +309,30 @@ export default function PropertiesPage() {
 
             <h2
               className="
-                text-3xl
+                text-4xl
                 font-bold
                 mb-4
               "
             >
 
-              No properties found
+              No Properties Found
 
             </h2>
 
             <p
               className="
                 text-gray-600
+                text-lg
               "
             >
 
-              Try adjusting your filters.
+              Try adjusting your filters or search terms.
 
             </p>
 
           </div>
-        )}
 
-        {/* GRID */}
-
-        {!loading &&
-          filteredProperties.length > 0 && (
+        ) : (
 
           <div
             className="
@@ -381,17 +343,16 @@ export default function PropertiesPage() {
             "
           >
 
-            {filteredProperties.map(
+            {properties.map(
               (property) => (
 
                 <PropertyCard
+
                   key={property.id}
 
                   id={property.id}
 
-                  title={
-                    property.title
-                  }
+                  title={property.title}
 
                   description={
                     property.description
@@ -413,13 +374,6 @@ export default function PropertiesPage() {
                     property.category
                   }
 
-                  bedrooms={
-                    property.bedrooms
-                  }
-
-                  bathrooms={
-                    property.bathrooms
-                  }
                 />
               )
             )}
