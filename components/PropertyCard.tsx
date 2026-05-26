@@ -1,100 +1,362 @@
-'use client'
+"use client"
 
-import Link from 'next/link'
+import Image from "next/image"
+import Link from "next/link"
+
+import {
+  BedDouble,
+  Bath,
+  MapPin,
+  Heart,
+} from "lucide-react"
 
 interface PropertyCardProps {
 
-  property: {
-    id: string
-    title: string
-    location: string
-    price: string
-    description: string
-    image_url?: string
-  }
+  id: string
+
+  title: string
+
+  description: string
+
+  location: string
+
+  price: string
+
+  image_url: string
+
+  category: string
+
+  bedrooms?: number
+
+  bathrooms?: number
 }
 
 export default function PropertyCard({
-  property
+
+  id,
+
+  title,
+
+  description,
+
+  location,
+
+  price,
+
+  image_url,
+
+  category,
+
+  bedrooms,
+
+  bathrooms,
+
 }: PropertyCardProps) {
 
   return (
 
-    <div className="bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300">
+    <Link
+      href={`/properties/${id}`}
+    >
 
-      {/* PROPERTY IMAGE */}
+      <div
+        className="
+          bg-white
+          rounded-3xl
+          overflow-hidden
+          shadow-md
+          hover:shadow-2xl
+          transition
+          duration-300
+          hover:-translate-y-2
+          group
+        "
+      >
 
-      {property.image_url ? (
+        {/* IMAGE SECTION */}
 
-        <img
-          src={property.image_url}
-          alt={property.title}
-          className="w-full h-64 object-cover"
-        />
+        <div
+          className="
+            relative
+            h-72
+            w-full
+            overflow-hidden
+          "
+        >
 
-      ) : (
+          <Image
+            src={
+              image_url ||
 
-        <div className="w-full h-64 bg-orange-100 flex items-center justify-center text-orange-500 text-xl font-semibold">
+              "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?q=80&w=1200&auto=format&fit=crop"
+            }
 
-          No Image Available
+            alt={title}
+
+            fill
+
+            className="
+              object-cover
+              group-hover:scale-110
+              transition
+              duration-500
+            "
+          />
+
+          {/* CATEGORY */}
+
+          <div
+            className="
+              absolute
+              top-4
+              left-4
+              bg-orange-500
+              text-white
+              px-4
+              py-2
+              rounded-full
+              text-sm
+              font-semibold
+              shadow-md
+            "
+          >
+
+            {category}
+
+          </div>
+
+          {/* HEART ICON */}
+
+          <div
+            className="
+              absolute
+              top-4
+              right-4
+              bg-white/90
+              backdrop-blur-sm
+              p-3
+              rounded-full
+              shadow-md
+            "
+          >
+
+            <Heart
+              size={20}
+              className="
+                text-orange-500
+              "
+            />
+
+          </div>
 
         </div>
 
-      )}
+        {/* CONTENT */}
 
-      {/* PROPERTY DETAILS */}
+        <div
+          className="
+            p-6
+          "
+        >
 
-      <div className="p-6">
+          {/* TITLE */}
 
-        <h2 className="text-2xl font-bold text-orange-500 mb-3">
-
-          {property.title}
-
-        </h2>
-
-        <p className="text-gray-600 mb-2">
-
-          📍 {property.location}
-
-        </p>
-
-        <p className="text-2xl font-bold text-gray-800 mb-4">
-
-          Ksh {property.price}
-
-        </p>
-
-        <p className="text-gray-500 mb-6 line-clamp-3">
-
-          {property.description}
-
-        </p>
-
-        {/* ACTION BUTTONS */}
-
-        <div className="flex gap-4">
-
-          <Link
-            href={`/properties/${property.id}`}
-            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-center py-3 rounded-xl font-semibold transition"
+          <h2
+            className="
+              text-2xl
+              font-bold
+              text-gray-800
+              mb-3
+              line-clamp-1
+            "
           >
 
-            View Property
+            {title}
 
-          </Link>
+          </h2>
 
-          <button
-            className="bg-orange-100 hover:bg-orange-200 text-orange-500 px-4 rounded-xl transition"
+          {/* LOCATION */}
+
+          <div
+            className="
+              flex
+              items-center
+              gap-2
+              text-gray-500
+              mb-4
+            "
           >
 
-            ❤️
+            <MapPin
+              size={18}
+            />
 
-          </button>
+            <span>
+
+              {location}
+
+            </span>
+
+          </div>
+
+          {/* DESCRIPTION */}
+
+          <p
+            className="
+              text-gray-600
+              leading-7
+              mb-6
+              line-clamp-3
+            "
+          >
+
+            {description}
+
+          </p>
+
+          {/* FEATURES */}
+
+          <div
+            className="
+              flex
+              items-center
+              gap-6
+              mb-6
+            "
+          >
+
+            {/* BEDROOMS */}
+
+            <div
+              className="
+                flex
+                items-center
+                gap-2
+                text-gray-600
+              "
+            >
+
+              <BedDouble
+                size={20}
+                className="
+                  text-orange-500
+                "
+              />
+
+              <span
+                className="
+                  font-medium
+                "
+              >
+
+                {bedrooms || 0}
+                {" "}
+                Beds
+
+              </span>
+
+            </div>
+
+            {/* BATHROOMS */}
+
+            <div
+              className="
+                flex
+                items-center
+                gap-2
+                text-gray-600
+              "
+            >
+
+              <Bath
+                size={20}
+                className="
+                  text-orange-500
+                "
+              />
+
+              <span
+                className="
+                  font-medium
+                "
+              >
+
+                {bathrooms || 0}
+                {" "}
+                Baths
+
+              </span>
+
+            </div>
+
+          </div>
+
+          {/* FOOTER */}
+
+          <div
+            className="
+              flex
+              items-center
+              justify-between
+              border-t
+              pt-5
+            "
+          >
+
+            {/* PRICE */}
+
+            <div>
+
+              <p
+                className="
+                  text-sm
+                  text-gray-500
+                "
+              >
+
+                Starting From
+
+              </p>
+
+              <h3
+                className="
+                  text-3xl
+                  font-extrabold
+                  text-orange-500
+                "
+              >
+
+                Ksh {price}
+
+              </h3>
+
+            </div>
+
+            {/* BUTTON */}
+
+            <div
+              className="
+                bg-orange-500
+                hover:bg-orange-600
+                text-white
+                px-5
+                py-3
+                rounded-2xl
+                font-semibold
+                transition
+              "
+            >
+
+              View Details
+
+            </div>
+
+          </div>
 
         </div>
 
       </div>
 
-    </div>
+    </Link>
   )
 }

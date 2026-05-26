@@ -1,12 +1,28 @@
-import { supabase } from "@/lib/supabase"
 import Image from "next/image"
 import Link from "next/link"
+import { notFound } from "next/navigation"
+
+import {
+  MapPin,
+  BedDouble,
+  Bath,
+  ArrowLeft,
+} from "lucide-react"
+
+import { supabase }
+from "@/lib/supabase"
 
 import ReviewsList
 from "@/components/ReviewsList"
 
+import ReviewForm
+from "@/components/ReviewForm"
+
 import FavoriteButton
 from "@/components/FavoriteButton"
+
+import PropertyGallery
+from "@/components/PropertyGallery"
 
 interface PageProps {
 
@@ -15,11 +31,12 @@ interface PageProps {
   }>
 }
 
-export default async function PropertyDetailsPage({
+export default async function PropertyPage({
   params,
 }: PageProps) {
 
-  const { id } = await params
+  const { id } =
+    await params
 
   // FETCH PROPERTY
 
@@ -28,10 +45,22 @@ export default async function PropertyDetailsPage({
     error,
   } =
     await supabase
+
       .from("properties")
+
       .select("*")
+
       .eq("id", id)
+
       .single()
+
+  if (
+    error ||
+    !property
+  ) {
+
+    notFound()
+  }
 
   // FETCH REVIEWS
 
@@ -39,203 +68,148 @@ export default async function PropertyDetailsPage({
     data: reviews,
   } =
     await supabase
+
       .from("reviews")
+
       .select("*")
+
       .eq(
         "property_id",
         id
       )
+
       .order(
         "created_at",
+
         {
           ascending: false,
         }
       )
 
-  // PROPERTY NOT FOUND
+  // FETCH GALLERY IMAGES
 
-  if (
-    error ||
-    !property
-  ) {
+  const {
+    data: galleryImages,
+  } =
+    await supabase
 
-    return (
+      .from("property_images")
 
-      <main
-        className="
-          min-h-screen
-          flex
-          items-center
-          justify-center
-          bg-orange-50
-        "
-      >
+      .select("*")
 
-        <div className="text-center">
+      .eq(
+        "property_id",
+        id
+      )
 
-          <h1
-            className="
-              text-5xl
-              font-bold
-              text-red-500
-              mb-5
-            "
-          >
+  // BUILD IMAGE ARRAY
 
-            Property Not Found
+  const images =
 
-          </h1>
+    galleryImages &&
+    galleryImages.length > 0
 
-          <Link
-            href="/properties"
+      ? galleryImages.map(
+          (img) =>
+            img.image_url
+        )
 
-            className="
-              text-orange-500
-              font-semibold
-              text-lg
-            "
-          >
+      : [
+          property.image_url ||
 
-            ← Back to Properties
+          "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?q=80&w=1200&auto=format&fit=crop"
+        ]
 
-          </Link>
+  // RELATED PROPERTIES
 
-        </div>
+  const {
+    data: relatedProperties,
+  } =
+    await supabase
 
-      </main>
-    )
-  }
+      .from("properties")
+
+      .select("*")
+
+      .neq(
+        "id",
+        id
+      )
+
+      .eq(
+        "category",
+        property.category
+      )
+
+      .limit(3)
 
   return (
 
-    <main className="min-h-screen bg-orange-50">
+    <main
+      className="
+        min-h-screen
+        bg-orange-50
+        pb-20
+      "
+    >
 
-      {/* HERO SECTION */}
+      {/* TOP BAR */}
 
-      <section
+      <div
         className="
-          relative
-          h-[500px]
-          w-full
+          max-w-7xl
+          mx-auto
+          px-6
+          pt-8
+          flex
+          justify-between
+          items-center
         "
       >
 
-        {/* IMAGE */}
+        <Link
+          href="/properties"
 
-        <Image
-          src={
-            property.image_url ||
-
-            "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?q=80&w=1600&auto=format&fit=crop"
-          }
-
-          alt={property.title}
-
-          fill
-
-          priority
-
-          className="object-cover"
-        />
-
-        {/* OVERLAY */}
-
-        <div
           className="
-            absolute
-            inset-0
-            bg-black/50
-          "
-        />
-
-        {/* FAVORITE BUTTON */}
-
-        <div
-          className="
-            absolute
-            top-6
-            right-6
-            z-20
+            flex
+            items-center
+            gap-2
+            text-orange-500
+            font-semibold
+            hover:underline
           "
         >
 
-          <FavoriteButton
-            propertyId={property.id}
-          />
+          <ArrowLeft size={20} />
 
-        </div>
+          Back to Properties
 
-        {/* CONTENT */}
+        </Link>
 
-        <div
-          className="
-            absolute
-            bottom-0
-            left-0
-            w-full
-            z-10
-          "
-        >
+        <FavoriteButton
+          propertyId={property.id}
+        />
 
-          <div
-            className="
-              max-w-7xl
-              mx-auto
-              px-6
-              pb-10
-              text-white
-            "
-          >
+      </div>
 
-            <div
-              className="
-                inline-block
-                bg-orange-500
-                px-4
-                py-2
-                rounded-full
-                font-semibold
-                mb-5
-              "
-            >
+      {/* GALLERY */}
 
-              {property.category ||
-                "Property"}
+      <section
+        className="
+          max-w-7xl
+          mx-auto
+          px-6
+          pt-8
+        "
+      >
 
-            </div>
-
-            <h1
-              className="
-                text-5xl
-                md:text-6xl
-                font-extrabold
-                mb-5
-              "
-            >
-
-              {property.title}
-
-            </h1>
-
-            <p
-              className="
-                text-xl
-                md:text-2xl
-                text-orange-100
-              "
-            >
-
-              📍 {property.location}
-
-            </p>
-
-          </div>
-
-        </div>
+        <PropertyGallery
+          images={images}
+        />
 
       </section>
 
-      {/* MAIN CONTENT */}
+      {/* PROPERTY INFO */}
 
       <section
         className="
@@ -249,14 +223,216 @@ export default async function PropertyDetailsPage({
         "
       >
 
-        {/* LEFT SIDE */}
+        {/* LEFT */}
 
         <div
           className="
             lg:col-span-2
-            space-y-10
           "
         >
+
+          {/* TITLE */}
+
+          <div
+            className="
+              mb-8
+            "
+          >
+
+            <div
+              className="
+                flex
+                items-center
+                gap-4
+                mb-4
+              "
+            >
+
+              <span
+                className="
+                  bg-orange-500
+                  text-white
+                  px-5
+                  py-2
+                  rounded-full
+                  text-sm
+                  font-bold
+                "
+              >
+
+                {property.category}
+
+              </span>
+
+            </div>
+
+            <h1
+              className="
+                text-5xl
+                font-extrabold
+                text-gray-900
+                mb-4
+              "
+            >
+
+              {property.title}
+
+            </h1>
+
+            <div
+              className="
+                flex
+                items-center
+                gap-2
+                text-gray-600
+                text-lg
+              "
+            >
+
+              <MapPin
+                size={20}
+              />
+
+              {property.location}
+
+            </div>
+
+          </div>
+
+          {/* FEATURES */}
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              p-8
+              shadow-md
+              mb-10
+            "
+          >
+
+            <div
+              className="
+                grid
+                md:grid-cols-3
+                gap-8
+              "
+            >
+
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-4
+                "
+              >
+
+                <BedDouble
+                  size={32}
+                  className="
+                    text-orange-500
+                  "
+                />
+
+                <div>
+
+                  <p
+                    className="
+                      text-gray-500
+                    "
+                  >
+
+                    Bedrooms
+
+                  </p>
+
+                  <h3
+                    className="
+                      text-2xl
+                      font-bold
+                    "
+                  >
+
+                    {property.bedrooms || 0}
+
+                  </h3>
+
+                </div>
+
+              </div>
+
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-4
+                "
+              >
+
+                <Bath
+                  size={32}
+                  className="
+                    text-orange-500
+                  "
+                />
+
+                <div>
+
+                  <p
+                    className="
+                      text-gray-500
+                    "
+                  >
+
+                    Bathrooms
+
+                  </p>
+
+                  <h3
+                    className="
+                      text-2xl
+                      font-bold
+                    "
+                  >
+
+                    {property.bathrooms || 0}
+
+                  </h3>
+
+                </div>
+
+              </div>
+
+              <div>
+
+                <p
+                  className="
+                    text-gray-500
+                    mb-2
+                  "
+                >
+
+                  Monthly Rent
+
+                </p>
+
+                <h2
+                  className="
+                    text-4xl
+                    font-extrabold
+                    text-orange-500
+                  "
+                >
+
+                  Ksh {property.price}
+
+                </h2>
+
+              </div>
+
+            </div>
+
+          </div>
 
           {/* DESCRIPTION */}
 
@@ -266,6 +442,7 @@ export default async function PropertyDetailsPage({
               rounded-3xl
               p-8
               shadow-md
+              mb-10
             "
           >
 
@@ -274,7 +451,6 @@ export default async function PropertyDetailsPage({
                 text-3xl
                 font-bold
                 mb-6
-                text-gray-800
               "
             >
 
@@ -285,7 +461,7 @@ export default async function PropertyDetailsPage({
             <p
               className="
                 text-gray-700
-                leading-8
+                leading-9
                 text-lg
               "
             >
@@ -293,181 +469,6 @@ export default async function PropertyDetailsPage({
               {property.description}
 
             </p>
-
-          </div>
-
-          {/* DETAILS */}
-
-          <div
-            className="
-              bg-white
-              rounded-3xl
-              p-8
-              shadow-md
-            "
-          >
-
-            <h2
-              className="
-                text-3xl
-                font-bold
-                mb-8
-                text-gray-800
-              "
-            >
-
-              Property Details
-
-            </h2>
-
-            <div
-              className="
-                grid
-                md:grid-cols-2
-                gap-6
-              "
-            >
-
-              {/* BEDROOMS */}
-
-              <div
-                className="
-                  bg-orange-50
-                  p-6
-                  rounded-2xl
-                "
-              >
-
-                <p
-                  className="
-                    text-gray-500
-                    mb-2
-                  "
-                >
-
-                  Bedrooms
-
-                </p>
-
-                <h3
-                  className="
-                    text-3xl
-                    font-bold
-                  "
-                >
-
-                  {property.bedrooms || 0}
-
-                </h3>
-
-              </div>
-
-              {/* BATHROOMS */}
-
-              <div
-                className="
-                  bg-orange-50
-                  p-6
-                  rounded-2xl
-                "
-              >
-
-                <p
-                  className="
-                    text-gray-500
-                    mb-2
-                  "
-                >
-
-                  Bathrooms
-
-                </p>
-
-                <h3
-                  className="
-                    text-3xl
-                    font-bold
-                  "
-                >
-
-                  {property.bathrooms || 0}
-
-                </h3>
-
-              </div>
-
-              {/* TYPE */}
-
-              <div
-                className="
-                  bg-orange-50
-                  p-6
-                  rounded-2xl
-                "
-              >
-
-                <p
-                  className="
-                    text-gray-500
-                    mb-2
-                  "
-                >
-
-                  Property Type
-
-                </p>
-
-                <h3
-                  className="
-                    text-2xl
-                    font-bold
-                  "
-                >
-
-                  {property.type ||
-                    "House"}
-
-                </h3>
-
-              </div>
-
-              {/* STATUS */}
-
-              <div
-                className="
-                  bg-orange-50
-                  p-6
-                  rounded-2xl
-                "
-              >
-
-                <p
-                  className="
-                    text-gray-500
-                    mb-2
-                  "
-                >
-
-                  Status
-
-                </p>
-
-                <h3
-                  className="
-                    text-2xl
-                    font-bold
-                    text-green-600
-                  "
-                >
-
-                  {property.status ||
-                    "Available"}
-
-                </h3>
-
-              </div>
-
-            </div>
 
           </div>
 
@@ -482,61 +483,45 @@ export default async function PropertyDetailsPage({
             "
           >
 
-            <div
+            <h2
               className="
-                flex
-                justify-between
-                items-center
+                text-3xl
+                font-bold
                 mb-8
               "
             >
 
-              <h2
-                className="
-                  text-3xl
-                  font-bold
-                  text-gray-800
-                "
-              >
+              Reviews
 
-                Reviews
+            </h2>
 
-              </h2>
+            <ReviewForm
+              propertyId={property.id}
+            />
 
-              <div
-                className="
-                  bg-orange-100
-                  text-orange-600
-                  px-4
-                  py-2
-                  rounded-full
-                  font-semibold
-                "
-              >
+            <div
+              className="
+                mt-10
+              "
+            >
 
-                {reviews?.length || 0}
-                {" "}
-                Reviews
-
-              </div>
+              <ReviewsList
+                reviews={
+                  reviews || []
+                }
+              />
 
             </div>
-
-            <ReviewsList
-              reviews={
-                reviews || []
-              }
-            />
 
           </div>
 
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* RIGHT SIDEBAR */}
 
-        <div className="space-y-8">
+        <div>
 
-          {/* PRICE CARD */}
+          {/* CONTACT CARD */}
 
           <div
             className="
@@ -545,105 +530,43 @@ export default async function PropertyDetailsPage({
               p-8
               shadow-md
               sticky
-              top-28
+              top-24
             "
           >
 
             <h2
               className="
-                text-5xl
-                font-extrabold
-                text-orange-500
-                mb-2
+                text-3xl
+                font-bold
+                mb-6
               "
             >
 
-              Ksh {property.price}
+              Interested?
 
             </h2>
 
             <p
               className="
-                text-gray-500
+                text-gray-600
+                leading-8
                 mb-8
               "
             >
 
-              Per Month
+              Contact the landlord
+              today and schedule a
+              property visit.
 
             </p>
 
-            {/* CHAT */}
-
-            <Link
-              href={`/chat/${property.user_id}`}
-
+            <button
               className="
-                block
                 w-full
                 bg-orange-500
                 hover:bg-orange-600
                 text-white
-                text-center
-                py-4
-                rounded-2xl
-                font-bold
-                text-lg
-                transition
-                mb-4
-              "
-            >
-
-              Chat with Landlord
-
-            </Link>
-
-            {/* CALL */}
-
-            <a
-              href={`tel:${
-                property.phone ||
-                "+254700000000"
-              }`}
-
-              className="
-                block
-                w-full
-                bg-yellow-500
-                hover:bg-yellow-600
-                text-white
-                text-center
-                py-4
-                rounded-2xl
-                font-bold
-                text-lg
-                transition
-                mb-4
-              "
-            >
-
-              Call Landlord
-
-            </a>
-
-            {/* WHATSAPP */}
-
-            <a
-              href={`https://wa.me/${
-                property.whatsapp ||
-                "254700000000"
-              }`}
-
-              target="_blank"
-
-              className="
-                block
-                w-full
-                bg-green-500
-                hover:bg-green-600
-                text-white
-                text-center
-                py-4
+                py-5
                 rounded-2xl
                 font-bold
                 text-lg
@@ -651,15 +574,151 @@ export default async function PropertyDetailsPage({
               "
             >
 
-              WhatsApp Landlord
+              Contact Landlord
 
-            </a>
+            </button>
 
           </div>
 
         </div>
 
       </section>
+
+      {/* RELATED PROPERTIES */}
+
+      {relatedProperties &&
+        relatedProperties.length > 0 && (
+
+        <section
+          className="
+            max-w-7xl
+            mx-auto
+            px-6
+            mt-10
+          "
+        >
+
+          <h2
+            className="
+              text-4xl
+              font-extrabold
+              mb-10
+            "
+          >
+
+            Similar Properties
+
+          </h2>
+
+          <div
+            className="
+              grid
+              md:grid-cols-2
+              lg:grid-cols-3
+              gap-8
+            "
+          >
+
+            {relatedProperties.map(
+              (related) => (
+
+                <Link
+                  key={related.id}
+
+                  href={`/properties/${related.id}`}
+                >
+
+                  <div
+                    className="
+                      bg-white
+                      rounded-3xl
+                      overflow-hidden
+                      shadow-md
+                      hover:shadow-xl
+                      transition
+                    "
+                  >
+
+                    <div
+                      className="
+                        relative
+                        h-64
+                      "
+                    >
+
+                      <Image
+                        src={
+                          related.image_url ||
+
+                          "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?q=80&w=1200&auto=format&fit=crop"
+                        }
+
+                        alt={
+                          related.title
+                        }
+
+                        fill
+
+                        className="
+                          object-cover
+                        "
+                      />
+
+                    </div>
+
+                    <div
+                      className="
+                        p-6
+                      "
+                    >
+
+                      <h3
+                        className="
+                          text-2xl
+                          font-bold
+                          mb-3
+                        "
+                      >
+
+                        {related.title}
+
+                      </h3>
+
+                      <p
+                        className="
+                          text-gray-500
+                          mb-4
+                        "
+                      >
+
+                        {related.location}
+
+                      </p>
+
+                      <p
+                        className="
+                          text-orange-500
+                          text-3xl
+                          font-extrabold
+                        "
+                      >
+
+                        Ksh {related.price}
+
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                </Link>
+              )
+            )}
+
+          </div>
+
+        </section>
+      )}
 
     </main>
   )

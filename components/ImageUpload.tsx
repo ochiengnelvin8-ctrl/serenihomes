@@ -1,101 +1,179 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useState }
+from "react"
+
+import {
+  Upload,
+  Loader2,
+} from "lucide-react"
+
+import { supabase }
+from "@/lib/supabase"
+
+interface Props {
+
+  onUpload: (
+    url: string
+  ) => void
+}
 
 export default function ImageUpload({
-  onUpload
-}: {
-  onUpload: (url: string) => void
-}) {
+  onUpload,
+}: Props) {
 
-  const [uploading, setUploading] =
-    useState(false)
+  const [
+    uploading,
+    setUploading,
+  ] = useState(false)
 
-  const [imageUrl, setImageUrl] =
-    useState('')
+  async function handleUpload(
+    event:
+      React.ChangeEvent<HTMLInputElement>
+  ) {
 
-  const uploadImage = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+    const file =
+      event.target.files?.[0]
 
-    try {
+    if (!file)
+      return
 
-      setUploading(true)
+    setUploading(true)
 
-      const file =
-        e.target.files?.[0]
+    const fileExt =
+      file.name.split(".").pop()
 
-      if (!file) return
+    const fileName =
 
-      const fileName =
-        `${Date.now()}-${file.name}`
+      `${Date.now()}.${fileExt}`
 
-      const { error } =
-        await supabase.storage
-          .from('property-images')
-          .upload(fileName, file)
+    const {
+      error,
+    } =
+      await supabase.storage
 
-      if (error) {
+        .from(
+          "property-images"
+        )
 
-        alert(error.message)
+        .upload(
+          fileName,
+          file
+        )
 
-        setUploading(false)
+    if (error) {
 
-        return
-      }
+      console.error(error)
 
-      const {
-        data: { publicUrl }
-      } = supabase.storage
-        .from('property-images')
-        .getPublicUrl(fileName)
+      alert(
+        "Upload failed"
+      )
 
-      setImageUrl(publicUrl)
+      setUploading(false)
 
-      onUpload(publicUrl)
-
-      alert('Image uploaded successfully!')
-
-    } catch (error) {
-
-      alert('Upload failed.')
-
+      return
     }
+
+    const {
+      data,
+    } =
+      supabase.storage
+
+        .from(
+          "property-images"
+        )
+
+        .getPublicUrl(
+          fileName
+        )
+
+    onUpload(
+      data.publicUrl
+    )
 
     setUploading(false)
   }
 
   return (
 
-    <div className="space-y-6">
+    <div>
 
-      <input
-        type="file"
-        accept="image/*"
-        onChange={uploadImage}
-        className="w-full border border-gray-300 rounded-xl p-4"
-      />
+      <label
+        className="
+          flex
+          flex-col
+          items-center
+          justify-center
+          border-2
+          border-dashed
+          border-orange-300
+          rounded-3xl
+          p-10
+          cursor-pointer
+          hover:bg-orange-50
+          transition
+        "
+      >
 
-      {uploading && (
+        {uploading ? (
 
-        <p className="text-orange-500">
+          <div
+            className="
+              flex
+              items-center
+              gap-3
+            "
+          >
 
-          Uploading image...
+            <Loader2
+              className="
+                animate-spin
+                text-orange-500
+              "
+            />
 
-        </p>
+            Uploading...
 
-      )}
+          </div>
 
-      {imageUrl && (
+        ) : (
 
-        <img
-          src={imageUrl}
-          alt="Uploaded"
-          className="w-full h-64 object-cover rounded-2xl"
+          <>
+
+            <Upload
+              size={40}
+              className="
+                text-orange-500
+                mb-4
+              "
+            />
+
+            <p
+              className="
+                font-semibold
+              "
+            >
+
+              Click to upload image
+
+            </p>
+
+          </>
+        )}
+
+        <input
+          type="file"
+
+          accept="image/*"
+
+          onChange={
+            handleUpload
+          }
+
+          className="hidden"
         />
 
-      )}
+      </label>
 
     </div>
   )
