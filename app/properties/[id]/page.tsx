@@ -5,8 +5,6 @@ import {
   useState,
 } from "react"
 
-import Image from "next/image"
-
 import Link from "next/link"
 
 import {
@@ -33,6 +31,9 @@ from "@/components/FavoriteButton"
 
 import PropertyGallery
 from "@/components/PropertyGallery"
+
+import PropertyMap
+from "@/components/PropertyMap"
 
 interface Property {
 
@@ -551,6 +552,38 @@ export default function PropertyDetailsPage() {
                 }
 
               </p>
+
+            </div>
+
+            {/* MAP SECTION */}
+
+            <div
+              className="
+                bg-white
+                rounded-3xl
+                shadow-md
+                p-8
+                mb-10
+              "
+            >
+
+              <h2
+                className="
+                  text-3xl
+                  font-bold
+                  mb-8
+                "
+              >
+
+                Property Location
+
+              </h2>
+
+              <PropertyMap
+                location={
+                  property.location
+                }
+              />
 
             </div>
 

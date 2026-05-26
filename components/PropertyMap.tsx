@@ -1,42 +1,50 @@
-'use client'
+interface Props {
 
-import {
-  GoogleMap,
-  LoadScript,
-  Marker
-} from '@react-google-maps/api'
-
-const containerStyle = {
-  width: '100%',
-  height: '400px'
+  location: string
 }
 
-const center = {
-  lat: -1.286389,
-  lng: 36.817223
-}
+export default function PropertyMap({
 
-export default function PropertyMap() {
+  location,
+
+}: Props) {
+
+  const mapUrl =
+
+    `https://www.google.com/maps?q=${encodeURIComponent(
+      location
+    )}&output=embed`
 
   return (
 
-    <LoadScript
-      googleMapsApiKey={
-        process.env
-          .NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!
-      }
+    <div
+      className="
+        rounded-3xl
+        overflow-hidden
+        shadow-md
+      "
     >
 
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={center}
-        zoom={12}
-      >
+      <iframe
 
-        <Marker position={center} />
+        src={mapUrl}
 
-      </GoogleMap>
+        width="100%"
 
-    </LoadScript>
+        height="450"
+
+        loading="lazy"
+
+        allowFullScreen
+
+        referrerPolicy="no-referrer-when-downgrade"
+
+        className="
+          border-0
+          w-full
+        "
+      />
+
+    </div>
   )
 }
