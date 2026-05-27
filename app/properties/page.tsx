@@ -30,9 +30,13 @@ interface Property {
 
   category: string
 
+  featured?: boolean
+
   bedrooms?: number
 
   bathrooms?: number
+
+  views?: number
 
   created_at?: string
 }
@@ -81,14 +85,14 @@ export default function PropertiesPage() {
     setBedrooms,
   ] = useState("")
 
-  // SORT STATE
+  // SORTING
 
   const [
     sortBy,
     setSortBy,
   ] = useState("latest")
 
-  // PAGINATION STATES
+  // PAGINATION
 
   const [
     currentPage,
@@ -130,9 +134,11 @@ export default function PropertiesPage() {
     if (search) {
 
       query =
-        query.ilike(
-          "title",
-          `%${search}%`
+        query.or(
+
+          `title.ilike.%${search}%,
+
+          description.ilike.%${search}%`
         )
     }
 
@@ -165,7 +171,7 @@ export default function PropertiesPage() {
       query =
         query.gte(
           "price",
-          minPrice
+          Number(minPrice)
         )
     }
 
@@ -176,7 +182,7 @@ export default function PropertiesPage() {
       query =
         query.lte(
           "price",
-          maxPrice
+          Number(maxPrice)
         )
     }
 
@@ -199,7 +205,9 @@ export default function PropertiesPage() {
         query =
           query.eq(
             "bedrooms",
-            bedrooms
+            Number(
+              bedrooms
+            )
           )
       }
     }
@@ -258,7 +266,33 @@ export default function PropertiesPage() {
         )
     }
 
-    // PAGINATION RANGE
+    if (
+      sortBy === "views"
+    ) {
+
+      query =
+        query.order(
+          "views",
+          {
+            ascending: false,
+          }
+        )
+    }
+
+    if (
+      sortBy === "featured"
+    ) {
+
+      query =
+        query.order(
+          "featured",
+          {
+            ascending: false,
+          }
+        )
+    }
+
+    // PAGINATION
 
     const from =
 
@@ -286,10 +320,6 @@ export default function PropertiesPage() {
       count,
     } = await query
 
-    setTotalProperties(
-      count || 0
-    )
-
     if (error) {
 
       console.error(error)
@@ -299,12 +329,16 @@ export default function PropertiesPage() {
       setProperties(
         data || []
       )
+
+      setTotalProperties(
+        count || 0
+      )
     }
 
     setLoading(false)
   }
 
-  // RESET PAGE ON FILTER CHANGE
+  // RESET PAGE
 
   useEffect(() => {
 
@@ -321,7 +355,7 @@ export default function PropertiesPage() {
     sortBy,
   ])
 
-  // FETCH ON CHANGE
+  // FETCH
 
   useEffect(() => {
 
@@ -357,7 +391,7 @@ export default function PropertiesPage() {
         "
       >
 
-        {/* PAGE HEADER */}
+        {/* HEADER */}
 
         <div
           className="
@@ -374,7 +408,7 @@ export default function PropertiesPage() {
             "
           >
 
-            Discover Properties
+            Explore Properties
 
           </h1>
 
@@ -385,9 +419,10 @@ export default function PropertiesPage() {
             "
           >
 
-            Find apartments,
-            villas, bedsitters,
-            and homes across Kenya.
+            Discover apartments,
+            villas, studios,
+            bedsitters and homes
+            across Kenya.
 
           </p>
 
@@ -420,6 +455,61 @@ export default function PropertiesPage() {
 
         />
 
+        {/* RESULTS INFO */}
+
+        {!loading && (
+
+          <div
+            className="
+              flex
+              items-center
+              justify-between
+              mb-8
+            "
+          >
+
+            <p
+              className="
+                text-gray-600
+                text-lg
+              "
+            >
+
+              Showing
+
+              <span
+                className="
+                  font-bold
+                  text-gray-900
+                  mx-2
+                "
+              >
+
+                {properties.length}
+
+              </span>
+
+              of
+
+              <span
+                className="
+                  font-bold
+                  text-gray-900
+                  mx-2
+                "
+              >
+
+                {totalProperties}
+
+              </span>
+
+              properties
+
+            </p>
+
+          </div>
+        )}
+
         {/* LOADING */}
 
         {loading && (
@@ -427,7 +517,7 @@ export default function PropertiesPage() {
           <div
             className="
               text-center
-              py-20
+              py-24
             "
           >
 
@@ -480,8 +570,8 @@ export default function PropertiesPage() {
               "
             >
 
-              Try changing your
-              filters or search terms.
+              Try adjusting your
+              search filters.
 
             </p>
 
@@ -506,37 +596,70 @@ export default function PropertiesPage() {
               {properties.map(
                 (property) => (
 
-                  <PropertyCard
-
+                  <div
                     key={property.id}
 
-                    id={property.id}
+                    className="
+                      relative
+                    "
+                  >
 
-                    title={
-                      property.title
-                    }
+                    {/* FEATURED BADGE */}
 
-                    description={
-                      property.description
-                    }
+                    {property.featured && (
 
-                    location={
-                      property.location
-                    }
+                      <div
+                        className="
+                          absolute
+                          top-4
+                          left-4
+                          z-10
+                          bg-yellow-400
+                          text-black
+                          px-4
+                          py-2
+                          rounded-full
+                          font-bold
+                          shadow-lg
+                        "
+                      >
 
-                    price={
-                      property.price
-                    }
+                        ⭐ Featured
 
-                    image_url={
-                      property.image_url
-                    }
+                      </div>
+                    )}
 
-                    category={
-                      property.category
-                    }
+                    <PropertyCard
 
-                  />
+                      id={property.id}
+
+                      title={
+                        property.title
+                      }
+
+                      description={
+                        property.description
+                      }
+
+                      location={
+                        property.location
+                      }
+
+                      price={
+                        property.price
+                      }
+
+                      image_url={
+                        property.image_url
+                      }
+
+                      category={
+                        property.category
+                      }
+
+                    />
+
+                  </div>
                 )
               )}
 

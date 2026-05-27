@@ -1,45 +1,38 @@
 "use client"
 
-interface Props {
+interface AdvancedFiltersProps {
 
   search: string
-
   setSearch: (
     value: string
   ) => void
 
   location: string
-
   setLocation: (
     value: string
   ) => void
 
   category: string
-
   setCategory: (
     value: string
   ) => void
 
   minPrice: string
-
   setMinPrice: (
     value: string
   ) => void
 
   maxPrice: string
-
   setMaxPrice: (
     value: string
   ) => void
 
   bedrooms: string
-
   setBedrooms: (
     value: string
   ) => void
 
   sortBy: string
-
   setSortBy: (
     value: string
   ) => void
@@ -68,7 +61,18 @@ export default function AdvancedFilters({
   sortBy,
   setSortBy,
 
-}: Props) {
+}: AdvancedFiltersProps) {
+
+  function clearFilters() {
+
+    setSearch("")
+    setLocation("")
+    setCategory("")
+    setMinPrice("")
+    setMaxPrice("")
+    setBedrooms("")
+    setSortBy("latest")
+  }
 
   return (
 
@@ -85,6 +89,7 @@ export default function AdvancedFilters({
       <div
         className="
           grid
+          grid-cols-1
           md:grid-cols-2
           lg:grid-cols-4
           gap-5
@@ -93,281 +98,419 @@ export default function AdvancedFilters({
 
         {/* SEARCH */}
 
-        <input
+        <div>
 
-          type="text"
+          <label
+            className="
+              block
+              mb-2
+              font-semibold
+              text-gray-700
+            "
+          >
 
-          placeholder="
-          Search properties...
-          "
+            Search
 
-          value={search}
+          </label>
 
-          onChange={(e) =>
-            setSearch(
-              e.target.value
-            )
-          }
+          <input
 
-          className="
-            border
-            rounded-2xl
-            p-4
-            outline-none
-            focus:ring-2
-            focus:ring-orange-500
-          "
-        />
+            type="text"
+
+            placeholder="
+            Search properties...
+            "
+
+            value={search}
+
+            onChange={(e) =>
+              setSearch(
+                e.target.value
+              )
+            }
+
+            className="
+              w-full
+              border
+              border-gray-300
+              rounded-2xl
+              p-4
+              outline-none
+              focus:ring-2
+              focus:ring-orange-500
+            "
+          />
+
+        </div>
 
         {/* LOCATION */}
 
-        <input
+        <div>
 
-          type="text"
+          <label
+            className="
+              block
+              mb-2
+              font-semibold
+              text-gray-700
+            "
+          >
 
-          placeholder="
-          Location
-          "
+            Location
 
-          value={location}
+          </label>
 
-          onChange={(e) =>
-            setLocation(
-              e.target.value
-            )
-          }
+          <input
 
-          className="
-            border
-            rounded-2xl
-            p-4
-            outline-none
-            focus:ring-2
-            focus:ring-orange-500
-          "
-        />
+            type="text"
+
+            placeholder="
+            Nairobi, Kisumu...
+            "
+
+            value={location}
+
+            onChange={(e) =>
+              setLocation(
+                e.target.value
+              )
+            }
+
+            className="
+              w-full
+              border
+              border-gray-300
+              rounded-2xl
+              p-4
+              outline-none
+              focus:ring-2
+              focus:ring-orange-500
+            "
+          />
+
+        </div>
 
         {/* CATEGORY */}
 
-        <select
+        <div>
 
-          value={category}
+          <label
+            className="
+              block
+              mb-2
+              font-semibold
+              text-gray-700
+            "
+          >
 
-          onChange={(e) =>
-            setCategory(
-              e.target.value
-            )
-          }
+            Category
 
-          className="
-            border
-            rounded-2xl
-            p-4
-            outline-none
-            focus:ring-2
-            focus:ring-orange-500
-          "
-        >
+          </label>
 
-          <option value="">
-            All Categories
-          </option>
+          <select
 
-          <option value="Apartment">
-            Apartment
-          </option>
+            value={category}
 
-          <option value="Bedsitter">
-            Bedsitter
-          </option>
+            onChange={(e) =>
+              setCategory(
+                e.target.value
+              )
+            }
 
-          <option value="Maisonette">
-            Maisonette
-          </option>
+            className="
+              w-full
+              border
+              border-gray-300
+              rounded-2xl
+              p-4
+              outline-none
+              focus:ring-2
+              focus:ring-orange-500
+            "
+          >
 
-          <option value="Villa">
-            Villa
-          </option>
+            <option value="">
+              All Categories
+            </option>
 
-          <option value="Studio">
-            Studio
-          </option>
+            <option value="Apartment">
+              Apartment
+            </option>
 
-        </select>
+            <option value="Bedsitter">
+              Bedsitter
+            </option>
+
+            <option value="Studio">
+              Studio
+            </option>
+
+            <option value="Maisonette">
+              Maisonette
+            </option>
+
+            <option value="Villa">
+              Villa
+            </option>
+
+          </select>
+
+        </div>
 
         {/* BEDROOMS */}
 
-        <select
+        <div>
 
-          value={bedrooms}
+          <label
+            className="
+              block
+              mb-2
+              font-semibold
+              text-gray-700
+            "
+          >
 
-          onChange={(e) =>
-            setBedrooms(
-              e.target.value
-            )
-          }
+            Bedrooms
 
-          className="
-            border
-            rounded-2xl
-            p-4
-            outline-none
-            focus:ring-2
-            focus:ring-orange-500
-          "
-        >
+          </label>
 
-          <option value="">
-            Any Bedrooms
-          </option>
+          <select
 
-          <option value="1">
-            1 Bedroom
-          </option>
+            value={bedrooms}
 
-          <option value="2">
-            2 Bedrooms
-          </option>
+            onChange={(e) =>
+              setBedrooms(
+                e.target.value
+              )
+            }
 
-          <option value="3">
-            3 Bedrooms
-          </option>
+            className="
+              w-full
+              border
+              border-gray-300
+              rounded-2xl
+              p-4
+              outline-none
+              focus:ring-2
+              focus:ring-orange-500
+            "
+          >
 
-          <option value="4">
-            4+ Bedrooms
-          </option>
+            <option value="">
+              Any Bedrooms
+            </option>
 
-        </select>
+            <option value="1">
+              1 Bedroom
+            </option>
+
+            <option value="2">
+              2 Bedrooms
+            </option>
+
+            <option value="3">
+              3 Bedrooms
+            </option>
+
+            <option value="4">
+              4+ Bedrooms
+            </option>
+
+          </select>
+
+        </div>
 
         {/* MIN PRICE */}
 
-        <input
+        <div>
 
-          type="number"
+          <label
+            className="
+              block
+              mb-2
+              font-semibold
+              text-gray-700
+            "
+          >
 
-          placeholder="
-          Min Price
-          "
+            Min Price
 
-          value={minPrice}
+          </label>
 
-          onChange={(e) =>
-            setMinPrice(
-              e.target.value
-            )
-          }
+          <input
 
-          className="
-            border
-            rounded-2xl
-            p-4
-            outline-none
-            focus:ring-2
-            focus:ring-orange-500
-          "
-        />
+            type="number"
+
+            placeholder="
+            Minimum price
+            "
+
+            value={minPrice}
+
+            onChange={(e) =>
+              setMinPrice(
+                e.target.value
+              )
+            }
+
+            className="
+              w-full
+              border
+              border-gray-300
+              rounded-2xl
+              p-4
+              outline-none
+              focus:ring-2
+              focus:ring-orange-500
+            "
+          />
+
+        </div>
 
         {/* MAX PRICE */}
 
-        <input
+        <div>
 
-          type="number"
+          <label
+            className="
+              block
+              mb-2
+              font-semibold
+              text-gray-700
+            "
+          >
 
-          placeholder="
-          Max Price
-          "
+            Max Price
 
-          value={maxPrice}
+          </label>
 
-          onChange={(e) =>
-            setMaxPrice(
-              e.target.value
-            )
-          }
+          <input
 
-          className="
-            border
-            rounded-2xl
-            p-4
-            outline-none
-            focus:ring-2
-            focus:ring-orange-500
-          "
-        />
+            type="number"
+
+            placeholder="
+            Maximum price
+            "
+
+            value={maxPrice}
+
+            onChange={(e) =>
+              setMaxPrice(
+                e.target.value
+              )
+            }
+
+            className="
+              w-full
+              border
+              border-gray-300
+              rounded-2xl
+              p-4
+              outline-none
+              focus:ring-2
+              focus:ring-orange-500
+            "
+          />
+
+        </div>
 
         {/* SORT */}
 
-        <select
+        <div>
 
-          value={sortBy}
+          <label
+            className="
+              block
+              mb-2
+              font-semibold
+              text-gray-700
+            "
+          >
 
-          onChange={(e) =>
-            setSortBy(
-              e.target.value
-            )
-          }
+            Sort By
 
+          </label>
+
+          <select
+
+            value={sortBy}
+
+            onChange={(e) =>
+              setSortBy(
+                e.target.value
+              )
+            }
+
+            className="
+              w-full
+              border
+              border-gray-300
+              rounded-2xl
+              p-4
+              outline-none
+              focus:ring-2
+              focus:ring-orange-500
+            "
+          >
+
+            <option value="latest">
+              Latest Listings
+            </option>
+
+            <option value="price-low">
+              Price: Low to High
+            </option>
+
+            <option value="price-high">
+              Price: High to Low
+            </option>
+
+            <option value="bedrooms">
+              Most Bedrooms
+            </option>
+
+            <option value="views">
+              Most Viewed
+            </option>
+
+            <option value="featured">
+              Featured First
+            </option>
+
+          </select>
+
+        </div>
+
+        {/* CLEAR BUTTON */}
+
+        <div
           className="
-            border
-            rounded-2xl
-            p-4
-            outline-none
-            focus:ring-2
-            focus:ring-orange-500
+            flex
+            items-end
           "
         >
 
-          <option value="latest">
-            Latest Listings
-          </option>
+          <button
 
-          <option value="price-low">
-            Price: Low to High
-          </option>
+            onClick={clearFilters}
 
-          <option value="price-high">
-            Price: High to Low
-          </option>
+            className="
+              w-full
+              bg-orange-500
+              hover:bg-orange-600
+              text-white
+              rounded-2xl
+              p-4
+              font-bold
+              transition
+            "
+          >
 
-          <option value="bedrooms">
-            Most Bedrooms
-          </option>
+            Clear Filters
 
-          <option value="views">
-            Most Viewed
-          </option>
+          </button>
 
-        </select>
-
-        {/* CLEAR FILTERS */}
-
-        <button
-
-          onClick={() => {
-
-            setSearch("")
-            setLocation("")
-            setCategory("")
-            setMinPrice("")
-            setMaxPrice("")
-            setBedrooms("")
-            setSortBy("latest")
-          }}
-
-          className="
-            bg-orange-500
-            hover:bg-orange-600
-            text-white
-            rounded-2xl
-            p-4
-            font-bold
-            transition
-          "
-        >
-
-          Clear Filters
-
-        </button>
+        </div>
 
       </div>
 
