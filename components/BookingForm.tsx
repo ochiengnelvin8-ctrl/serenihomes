@@ -1,182 +1,266 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
+import {
+  useState,
+} from "react"
 
-import { supabase } from '@/lib/supabase'
+import { supabase }
+from "@/lib/supabase"
 
-export default function BookingForm({
-  propertyId
-}: {
+interface Props {
+
   propertyId: string
-}) {
+}
 
-  const [loading, setLoading] =
-    useState(false)
+export default function
+BookingForm({
 
-  const [formData, setFormData] =
-    useState({
-      full_name: '',
-      phone: '',
-      viewing_date: '',
-      message: ''
-    })
+  propertyId,
 
-  const handleSubmit = async (
+}: Props) {
+
+  const [
+    bookingDate,
+    setBookingDate,
+  ] = useState("")
+
+  const [
+    message,
+    setMessage,
+  ] = useState("")
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(false)
+
+  async function
+  handleBooking(
     e: React.FormEvent
-  ) => {
+  ) {
 
     e.preventDefault()
 
-    setLoading(true)
-
     try {
 
+      setLoading(true)
+
+      // CURRENT USER
+
       const {
-        data: { user }
-      } = await supabase.auth.getUser()
+        data: authData,
+      } =
+        await supabase.auth.getUser()
+
+      const user =
+        authData.user
 
       if (!user) {
 
-        alert('Please login first.')
-
-        setLoading(false)
+        alert(
+          "Please login first"
+        )
 
         return
       }
 
-      const { error } =
-        await supabase
-          .from('bookings')
-          .insert([
-            {
-              property_id: propertyId,
-              user_id: user.id,
-              full_name:
-                formData.full_name,
-              phone:
-                formData.phone,
-              viewing_date:
-                formData.viewing_date,
-              message:
-                formData.message
-            }
-          ])
+      // CREATE BOOKING
+
+      const {
+        error,
+      } = await supabase
+
+        .from("bookings")
+
+        .insert({
+
+          property_id:
+            propertyId,
+
+          tenant_id:
+            user.id,
+
+          booking_date:
+            bookingDate,
+
+          message,
+        })
 
       if (error) {
 
-        alert(error.message)
+        console.error(error)
 
-        setLoading(false)
+        alert(
+          "Booking failed"
+        )
 
         return
       }
 
       alert(
-        'Viewing request submitted successfully!'
+        "Viewing request sent successfully!"
       )
 
-      setFormData({
-        full_name: '',
-        phone: '',
-        viewing_date: '',
-        message: ''
-      })
+      setBookingDate("")
+      setMessage("")
 
-    } catch (err) {
+    } catch (error) {
 
-      alert('Something went wrong.')
+      console.error(error)
 
+    } finally {
+
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
 
-    <div className="bg-white p-8 rounded-3xl shadow-lg mt-10">
+    <form
+      onSubmit={
+        handleBooking
+      }
 
-      <h2 className="text-3xl font-bold text-orange-500 mb-6">
+      className="
+        bg-white
+        rounded-3xl
+        shadow-md
+        p-8
+      "
+    >
 
-        Book Property Viewing
+      <h2
+        className="
+          text-3xl
+          font-bold
+          mb-8
+        "
+      >
+
+        Request Viewing
 
       </h2>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6"
+      {/* DATE */}
+
+      <div
+        className="
+          mb-6
+        "
       >
 
-        <input
-          type="text"
-          placeholder="Full Name"
-          value={formData.full_name}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              full_name:
-                e.target.value
-            })
-          }
-          className="w-full border border-gray-300 rounded-xl p-4"
-          required
-        />
-
-        <input
-          type="tel"
-          placeholder="Phone Number"
-          value={formData.phone}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              phone:
-                e.target.value
-            })
-          }
-          className="w-full border border-gray-300 rounded-xl p-4"
-          required
-        />
-
-        <input
-          type="date"
-          value={formData.viewing_date}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              viewing_date:
-                e.target.value
-            })
-          }
-          className="w-full border border-gray-300 rounded-xl p-4"
-          required
-        />
-
-        <textarea
-          placeholder="Message..."
-          value={formData.message}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              message:
-                e.target.value
-            })
-          }
-          className="w-full border border-gray-300 rounded-xl p-4 h-40"
-        />
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn-primary w-full"
+        <label
+          className="
+            block
+            mb-3
+            font-semibold
+          "
         >
 
-          {loading
-            ? 'Submitting...'
-            : 'Request Viewing'}
+          Preferred Date
 
-        </button>
+        </label>
 
-      </form>
+        <input
 
-    </div>
+          type="date"
+
+          required
+
+          value={bookingDate}
+
+          onChange={(e) =>
+            setBookingDate(
+              e.target.value
+            )
+          }
+
+          className="
+            w-full
+            border
+            rounded-2xl
+            p-4
+          "
+        />
+
+      </div>
+
+      {/* MESSAGE */}
+
+      <div
+        className="
+          mb-8
+        "
+      >
+
+        <label
+          className="
+            block
+            mb-3
+            font-semibold
+          "
+        >
+
+          Message
+
+        </label>
+
+        <textarea
+
+          rows={5}
+
+          placeholder="
+          Ask questions or leave a message...
+          "
+
+          value={message}
+
+          onChange={(e) =>
+            setMessage(
+              e.target.value
+            )
+          }
+
+          className="
+            w-full
+            border
+            rounded-2xl
+            p-4
+          "
+        />
+
+      </div>
+
+      {/* BUTTON */}
+
+      <button
+
+        type="submit"
+
+        disabled={loading}
+
+        className="
+          w-full
+          bg-orange-500
+          hover:bg-orange-600
+          disabled:opacity-50
+          text-white
+          py-4
+          rounded-2xl
+          font-bold
+          text-lg
+          transition
+        "
+      >
+
+        {loading
+
+          ? "Sending Request..."
+
+          : "Book Viewing"}
+
+      </button>
+
+    </form>
   )
 }

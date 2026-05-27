@@ -38,6 +38,9 @@ from "@/components/PropertyGallery"
 import PropertyMap
 from "@/components/PropertyMap"
 
+import BookingForm
+from "@/components/BookingForm"
+
 interface Property {
 
   id: string
@@ -483,6 +486,7 @@ PropertyDetailsPage() {
               flex
               items-center
               gap-5
+              flex-wrap
             "
           >
 
@@ -524,7 +528,7 @@ PropertyDetailsPage() {
 
         />
 
-        {/* CONTENT */}
+        {/* MAIN CONTENT */}
 
         <div
           className="
@@ -535,7 +539,7 @@ PropertyDetailsPage() {
           "
         >
 
-          {/* LEFT */}
+          {/* LEFT SECTION */}
 
           <div
             className="
@@ -555,7 +559,7 @@ PropertyDetailsPage() {
               "
             >
 
-              {/* PROPERTY STATS */}
+              {/* STATS */}
 
               <div
                 className="
@@ -723,6 +727,7 @@ PropertyDetailsPage() {
                 rounded-3xl
                 shadow-md
                 p-8
+                mb-10
               "
             >
 
@@ -765,6 +770,14 @@ PropertyDetailsPage() {
               </div>
 
             </div>
+
+            {/* BOOKING FORM */}
+
+            <BookingForm
+              propertyId={
+                property.id
+              }
+            />
 
           </div>
 
