@@ -37,6 +37,12 @@ interface Props {
   setBedrooms: (
     value: string
   ) => void
+
+  sortBy: string
+
+  setSortBy: (
+    value: string
+  ) => void
 }
 
 export default function AdvancedFilters({
@@ -58,6 +64,9 @@ export default function AdvancedFilters({
 
   bedrooms,
   setBedrooms,
+
+  sortBy,
+  setSortBy,
 
 }: Props) {
 
@@ -278,6 +287,46 @@ export default function AdvancedFilters({
 
           <option value="4">
             4+ Bedrooms
+          </option>
+
+        </select>
+
+        {/* SORT */}
+
+        <select
+
+          value={sortBy}
+
+          onChange={(e) =>
+            setSortBy(
+              e.target.value
+            )
+          }
+
+          className="
+            border
+            rounded-2xl
+            p-4
+            outline-none
+            focus:ring-2
+            focus:ring-orange-500
+          "
+        >
+
+          <option value="latest">
+            Latest Listings
+          </option>
+
+          <option value="price-low">
+            Price: Low to High
+          </option>
+
+          <option value="price-high">
+            Price: High to Low
+          </option>
+
+          <option value="bedrooms">
+            Most Bedrooms
           </option>
 
         </select>

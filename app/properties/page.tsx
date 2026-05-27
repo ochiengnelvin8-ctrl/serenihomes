@@ -33,6 +33,8 @@ interface Property {
   bedrooms?: number
 
   bathrooms?: number
+
+  created_at?: string
 }
 
 export default function PropertiesPage() {
@@ -78,6 +80,13 @@ export default function PropertiesPage() {
     bedrooms,
     setBedrooms,
   ] = useState("")
+
+  // SORT STATE
+
+  const [
+    sortBy,
+    setSortBy,
+  ] = useState("latest")
 
   // FETCH PROPERTIES
 
@@ -172,15 +181,64 @@ export default function PropertiesPage() {
       }
     }
 
+    // SORTING
+
+    if (
+      sortBy === "latest"
+    ) {
+
+      query =
+        query.order(
+          "created_at",
+          {
+            ascending: false,
+          }
+        )
+    }
+
+    if (
+      sortBy === "price-low"
+    ) {
+
+      query =
+        query.order(
+          "price",
+          {
+            ascending: true,
+          }
+        )
+    }
+
+    if (
+      sortBy === "price-high"
+    ) {
+
+      query =
+        query.order(
+          "price",
+          {
+            ascending: false,
+          }
+        )
+    }
+
+    if (
+      sortBy === "bedrooms"
+    ) {
+
+      query =
+        query.order(
+          "bedrooms",
+          {
+            ascending: false,
+          }
+        )
+    }
+
     const {
       data,
       error,
-    } = await query.order(
-      "created_at",
-      {
-        ascending: false,
-      }
-    )
+    } = await query
 
     if (error) {
 
@@ -196,7 +254,7 @@ export default function PropertiesPage() {
     setLoading(false)
   }
 
-  // REFETCH ON FILTER CHANGE
+  // REFETCH WHEN FILTERS CHANGE
 
   useEffect(() => {
 
@@ -210,6 +268,7 @@ export default function PropertiesPage() {
     minPrice,
     maxPrice,
     bedrooms,
+    sortBy,
   ])
 
   return (
@@ -287,6 +346,9 @@ export default function PropertiesPage() {
 
           bedrooms={bedrooms}
           setBedrooms={setBedrooms}
+
+          sortBy={sortBy}
+          setSortBy={setSortBy}
 
         />
 
