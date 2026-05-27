@@ -51,6 +51,8 @@ interface Property {
 
   category: string
 
+  landlord_phone?: string
+
   bedrooms?: number
 
   bathrooms?: number
@@ -500,7 +502,7 @@ export default function PropertyDetailsPage() {
                   />
 
                   {
-                    property.bedrooms
+                    property.bedrooms || 0
                   } Bedrooms
 
                 </div>
@@ -520,7 +522,7 @@ export default function PropertyDetailsPage() {
                   <Bath size={20} />
 
                   {
-                    property.bathrooms
+                    property.bathrooms || 0
                   } Bathrooms
 
                 </div>
@@ -682,23 +684,72 @@ export default function PropertyDetailsPage() {
 
               </p>
 
-              <button
+              <div
                 className="
-                  w-full
-                  bg-orange-500
-                  hover:bg-orange-600
-                  text-white
-                  py-4
-                  rounded-2xl
-                  font-bold
-                  text-lg
-                  transition
+                  flex
+                  flex-col
+                  gap-4
                 "
               >
 
-                Contact Landlord
+                {/* CALL BUTTON */}
 
-              </button>
+                <a
+
+                  href={`tel:${property.landlord_phone}`}
+
+                  className="
+                    w-full
+                    bg-orange-500
+                    hover:bg-orange-600
+                    text-white
+                    py-4
+                    rounded-2xl
+                    font-bold
+                    text-lg
+                    transition
+                    text-center
+                  "
+                >
+
+                  Call Landlord
+
+                </a>
+
+                {/* WHATSAPP */}
+
+                <a
+
+                  href={`https://wa.me/${property.landlord_phone?.replace(
+                    /\+/g,
+                    ""
+                  )}?text=${encodeURIComponent(
+                    `Hello, I am interested in ${property.title}`
+                  )}`}
+
+                  target="_blank"
+
+                  rel="noopener noreferrer"
+
+                  className="
+                    w-full
+                    bg-green-500
+                    hover:bg-green-600
+                    text-white
+                    py-4
+                    rounded-2xl
+                    font-bold
+                    text-lg
+                    transition
+                    text-center
+                  "
+                >
+
+                  WhatsApp Landlord
+
+                </a>
+
+              </div>
 
             </div>
 

@@ -1,14 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import {
+  useEffect,
+  useState,
+} from "react"
 
-import Link from "next/link"
+import { supabase }
+from "@/lib/supabase"
 
-import { supabase } from "@/lib/supabase"
+import PropertyCard
+from "@/components/PropertyCard"
 
-import PropertyCard from "@/components/PropertyCard"
-
-import SearchFilters from "@/components/SearchFilters"
+import AdvancedFilters
+from "@/components/AdvancedFilters"
 
 interface Property {
 
@@ -29,8 +33,6 @@ interface Property {
   bedrooms?: number
 
   bathrooms?: number
-
-  created_at?: string
 }
 
 export default function PropertiesPage() {
@@ -53,6 +55,11 @@ export default function PropertiesPage() {
   ] = useState("")
 
   const [
+    location,
+    setLocation,
+  ] = useState("")
+
+  const [
     category,
     setCategory,
   ] = useState("")
@@ -65,6 +72,11 @@ export default function PropertiesPage() {
   const [
     maxPrice,
     setMaxPrice,
+  ] = useState("")
+
+  const [
+    bedrooms,
+    setBedrooms,
   ] = useState("")
 
   // FETCH PROPERTIES
@@ -81,22 +93,25 @@ export default function PropertiesPage() {
 
         .select("*")
 
-        .order(
-          "created_at",
-
-          {
-            ascending: false,
-          }
-        )
-
     // SEARCH
 
     if (search) {
 
       query =
-        query.or(
-          `title.ilike.%${search}%,
-location.ilike.%${search}%`
+        query.ilike(
+          "title",
+          `%${search}%`
+        )
+    }
+
+    // LOCATION
+
+    if (location) {
+
+      query =
+        query.ilike(
+          "location",
+          `%${location}%`
         )
     }
 
@@ -133,28 +148,55 @@ location.ilike.%${search}%`
         )
     }
 
+    // BEDROOMS
+
+    if (bedrooms) {
+
+      if (
+        bedrooms === "4"
+      ) {
+
+        query =
+          query.gte(
+            "bedrooms",
+            4
+          )
+
+      } else {
+
+        query =
+          query.eq(
+            "bedrooms",
+            bedrooms
+          )
+      }
+    }
+
     const {
       data,
       error,
-    } = await query
+    } = await query.order(
+      "created_at",
+      {
+        ascending: false,
+      }
+    )
 
     if (error) {
 
       console.error(error)
 
-      setLoading(false)
+    } else {
 
-      return
+      setProperties(
+        data || []
+      )
     }
-
-    setProperties(
-      data || []
-    )
 
     setLoading(false)
   }
 
-  // LIVE FILTERING
+  // REFETCH ON FILTER CHANGE
 
   useEffect(() => {
 
@@ -163,12 +205,11 @@ location.ilike.%${search}%`
   }, [
 
     search,
-
+    location,
     category,
-
     minPrice,
-
     maxPrice,
+    bedrooms,
   ])
 
   return (
@@ -189,75 +230,51 @@ location.ilike.%${search}%`
         "
       >
 
-        {/* HEADER */}
+        {/* PAGE HEADER */}
 
         <div
           className="
-            flex
-            flex-col
-            md:flex-row
-            md:items-center
-            md:justify-between
-            gap-5
             mb-10
           "
         >
 
-          <div>
-
-            <h1
-              className="
-                text-5xl
-                font-extrabold
-                text-orange-500
-                mb-3
-              "
-            >
-
-              Browse Properties
-
-            </h1>
-
-            <p
-              className="
-                text-gray-600
-                text-lg
-              "
-            >
-
-              Find your perfect home with Sereni Homes.
-
-            </p>
-
-          </div>
-
-          <Link
-            href="/dashboard/landlord"
-
+          <h1
             className="
-              bg-orange-500
-              hover:bg-orange-600
-              text-white
-              px-6
-              py-4
-              rounded-2xl
-              font-semibold
-              transition
+              text-5xl
+              font-extrabold
+              text-gray-900
+              mb-4
             "
           >
 
-            Add Property
+            Discover Properties
 
-          </Link>
+          </h1>
+
+          <p
+            className="
+              text-lg
+              text-gray-600
+            "
+          >
+
+            Find apartments,
+            villas, bedsitters,
+            and homes across Kenya.
+
+          </p>
 
         </div>
 
-        {/* SEARCH FILTERS */}
+        {/* FILTERS */}
 
-        <SearchFilters
+        <AdvancedFilters
 
           search={search}
           setSearch={setSearch}
+
+          location={location}
+          setLocation={setLocation}
 
           category={category}
           setCategory={setCategory}
@@ -268,16 +285,19 @@ location.ilike.%${search}%`
           maxPrice={maxPrice}
           setMaxPrice={setMaxPrice}
 
+          bedrooms={bedrooms}
+          setBedrooms={setBedrooms}
+
         />
 
         {/* LOADING */}
 
-        {loading ? (
+        {loading && (
 
           <div
             className="
               text-center
-              py-24
+              py-20
             "
           >
 
@@ -294,22 +314,26 @@ location.ilike.%${search}%`
             </h2>
 
           </div>
+        )}
 
-        ) : properties.length === 0 ? (
+        {/* EMPTY STATE */}
+
+        {!loading &&
+          properties.length === 0 && (
 
           <div
             className="
               bg-white
               rounded-3xl
+              shadow-md
               p-16
               text-center
-              shadow-md
             "
           >
 
             <h2
               className="
-                text-4xl
+                text-3xl
                 font-bold
                 mb-4
               "
@@ -326,13 +350,18 @@ location.ilike.%${search}%`
               "
             >
 
-              Try adjusting your filters or search terms.
+              Try changing your
+              filters or search terms.
 
             </p>
 
           </div>
+        )}
 
-        ) : (
+        {/* PROPERTY GRID */}
+
+        {!loading &&
+          properties.length > 0 && (
 
           <div
             className="
@@ -352,7 +381,9 @@ location.ilike.%${search}%`
 
                   id={property.id}
 
-                  title={property.title}
+                  title={
+                    property.title
+                  }
 
                   description={
                     property.description
