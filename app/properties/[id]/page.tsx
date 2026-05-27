@@ -44,6 +44,9 @@ from "@/components/BookingForm"
 import ChatBox
 from "@/components/ChatBox"
 
+import RecommendedProperties
+from "@/components/RecommendedProperties"
+
 interface Property {
 
   id: string
@@ -223,7 +226,7 @@ PropertyDetailsPage() {
     }
   }
 
-  // INCREMENT VIEWS
+  // INCREMENT PROPERTY VIEWS
 
   async function incrementViews() {
 
@@ -251,6 +254,7 @@ PropertyDetailsPage() {
       .from("properties")
 
       .update({
+
         views:
           currentViews + 1,
       })
@@ -519,7 +523,7 @@ PropertyDetailsPage() {
 
         </div>
 
-        {/* GALLERY */}
+        {/* PROPERTY GALLERY */}
 
         <PropertyGallery
 
@@ -533,7 +537,7 @@ PropertyDetailsPage() {
 
         />
 
-        {/* MAIN CONTENT */}
+        {/* MAIN GRID */}
 
         <div
           className="
@@ -544,7 +548,7 @@ PropertyDetailsPage() {
           "
         >
 
-          {/* LEFT SECTION */}
+          {/* LEFT CONTENT */}
 
           <div
             className="
@@ -564,7 +568,7 @@ PropertyDetailsPage() {
               "
             >
 
-              {/* STATS */}
+              {/* PROPERTY STATS */}
 
               <div
                 className="
@@ -794,14 +798,44 @@ PropertyDetailsPage() {
 
             {/* REALTIME CHAT */}
 
-            <ChatBox
+            <div
+              className="
+                mb-10
+              "
+            >
+
+              <ChatBox
+
+                propertyId={
+                  property.id
+                }
+
+                receiverId={
+                  property.user_id
+                }
+
+              />
+
+            </div>
+
+            {/* RECOMMENDATIONS */}
+
+            <RecommendedProperties
 
               propertyId={
                 property.id
               }
 
-              receiverId={
-                property.user_id
+              category={
+                property.category
+              }
+
+              location={
+                property.location
+              }
+
+              price={
+                property.price
               }
 
             />
@@ -882,7 +916,7 @@ PropertyDetailsPage() {
 
               </a>
 
-              {/* WHATSAPP */}
+              {/* WHATSAPP BUTTON */}
 
               <a
 
