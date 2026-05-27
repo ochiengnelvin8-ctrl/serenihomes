@@ -21,6 +21,9 @@ from "@/lib/supabase"
 import ImageUpload
 from "@/components/ImageUpload"
 
+import MultiImageUpload
+from "@/components/MultiImageUpload"
+
 interface Property {
 
   id: string
@@ -69,10 +72,19 @@ LandlordDashboardPage() {
     setUserId,
   ] = useState("")
 
+  // MAIN IMAGE
+
   const [
     imageUrl,
     setImageUrl,
   ] = useState("")
+
+  // GALLERY IMAGES
+
+  const [
+    galleryImages,
+    setGalleryImages,
+  ] = useState<string[]>([])
 
   const [
     formData,
@@ -171,8 +183,14 @@ LandlordDashboardPage() {
 
       setSubmitting(true)
 
+      // INSERT PROPERTY
+
       const {
+
+        data: propertyData,
+
         error,
+
       } = await supabase
 
         .from("properties")
@@ -218,6 +236,10 @@ LandlordDashboardPage() {
           featured: false,
         })
 
+        .select()
+
+        .single()
+
       if (error) {
 
         console.error(error)
@@ -227,6 +249,37 @@ LandlordDashboardPage() {
         )
 
         return
+      }
+
+      // SAVE GALLERY IMAGES
+
+      if (
+        propertyData &&
+        galleryImages.length > 0
+      ) {
+
+        const galleryInsert =
+
+          galleryImages.map(
+            (image) => ({
+
+              property_id:
+                propertyData.id,
+
+              image_url:
+                image,
+            })
+          )
+
+        await supabase
+
+          .from(
+            "property_images"
+          )
+
+          .insert(
+            galleryInsert
+          )
       }
 
       // RESET FORM
@@ -251,6 +304,8 @@ LandlordDashboardPage() {
       })
 
       setImageUrl("")
+
+      setGalleryImages([])
 
       fetchProperties()
 
@@ -487,13 +542,55 @@ LandlordDashboardPage() {
             "
           >
 
-            {/* IMAGE UPLOAD */}
+            {/* MAIN IMAGE */}
 
-            <ImageUpload
-              onUpload={
-                setImageUrl
-              }
-            />
+            <div>
+
+              <h3
+                className="
+                  text-2xl
+                  font-bold
+                  mb-4
+                "
+              >
+
+                Main Property Image
+
+              </h3>
+
+              <ImageUpload
+                onUpload={
+                  setImageUrl
+                }
+              />
+
+            </div>
+
+            {/* GALLERY IMAGES */}
+
+            <div>
+
+              <h3
+                className="
+                  text-2xl
+                  font-bold
+                  mb-4
+                "
+              >
+
+                Property Gallery
+
+              </h3>
+
+              <MultiImageUpload
+
+                onUploadComplete={
+                  setGalleryImages
+                }
+
+              />
+
+            </div>
 
             {/* TITLE */}
 
@@ -1055,46 +1152,37 @@ LandlordDashboardPage() {
 
                       {/* ACTIONS */}
 
-                      <div
+                      <button
+
+                        onClick={() =>
+                          deleteProperty(
+                            property.id
+                          )
+                        }
+
                         className="
+                          w-full
+                          bg-red-500
+                          hover:bg-red-600
+                          text-white
+                          py-3
+                          rounded-2xl
+                          font-bold
                           flex
-                          gap-4
+                          items-center
+                          justify-center
+                          gap-2
+                          transition
                         "
                       >
 
-                        <button
+                        <Trash2
+                          size={18}
+                        />
 
-                          onClick={() =>
-                            deleteProperty(
-                              property.id
-                            )
-                          }
+                        Delete
 
-                          className="
-                            flex-1
-                            bg-red-500
-                            hover:bg-red-600
-                            text-white
-                            py-3
-                            rounded-2xl
-                            font-bold
-                            flex
-                            items-center
-                            justify-center
-                            gap-2
-                            transition
-                          "
-                        >
-
-                          <Trash2
-                            size={18}
-                          />
-
-                          Delete
-
-                        </button>
-
-                      </div>
+                      </button>
 
                     </div>
 
