@@ -88,6 +88,27 @@ export default function PropertiesPage() {
     setSortBy,
   ] = useState("latest")
 
+  // PAGINATION STATES
+
+  const [
+    currentPage,
+    setCurrentPage,
+  ] = useState(1)
+
+  const [
+    totalProperties,
+    setTotalProperties,
+  ] = useState(0)
+
+  const propertiesPerPage = 6
+
+  const totalPages =
+
+    Math.ceil(
+      totalProperties /
+      propertiesPerPage
+    )
+
   // FETCH PROPERTIES
 
   async function fetchProperties() {
@@ -100,7 +121,9 @@ export default function PropertiesPage() {
 
         .from("properties")
 
-        .select("*")
+        .select("*", {
+          count: "exact",
+        })
 
     // SEARCH
 
@@ -235,10 +258,37 @@ export default function PropertiesPage() {
         )
     }
 
+    // PAGINATION RANGE
+
+    const from =
+
+      (currentPage - 1)
+      *
+      propertiesPerPage
+
+    const to =
+
+      from
+      +
+      propertiesPerPage
+      -
+      1
+
+    query =
+      query.range(
+        from,
+        to
+      )
+
     const {
       data,
       error,
+      count,
     } = await query
+
+    setTotalProperties(
+      count || 0
+    )
 
     if (error) {
 
@@ -254,7 +304,24 @@ export default function PropertiesPage() {
     setLoading(false)
   }
 
-  // REFETCH WHEN FILTERS CHANGE
+  // RESET PAGE ON FILTER CHANGE
+
+  useEffect(() => {
+
+    setCurrentPage(1)
+
+  }, [
+
+    search,
+    location,
+    category,
+    minPrice,
+    maxPrice,
+    bedrooms,
+    sortBy,
+  ])
+
+  // FETCH ON CHANGE
 
   useEffect(() => {
 
@@ -269,6 +336,7 @@ export default function PropertiesPage() {
     maxPrice,
     bedrooms,
     sortBy,
+    currentPage,
   ])
 
   return (
@@ -425,53 +493,191 @@ export default function PropertiesPage() {
         {!loading &&
           properties.length > 0 && (
 
-          <div
-            className="
-              grid
-              md:grid-cols-2
-              lg:grid-cols-3
-              gap-8
-            "
-          >
+          <>
+            <div
+              className="
+                grid
+                md:grid-cols-2
+                lg:grid-cols-3
+                gap-8
+              "
+            >
 
-            {properties.map(
-              (property) => (
+              {properties.map(
+                (property) => (
 
-                <PropertyCard
+                  <PropertyCard
 
-                  key={property.id}
+                    key={property.id}
 
-                  id={property.id}
+                    id={property.id}
 
-                  title={
-                    property.title
+                    title={
+                      property.title
+                    }
+
+                    description={
+                      property.description
+                    }
+
+                    location={
+                      property.location
+                    }
+
+                    price={
+                      property.price
+                    }
+
+                    image_url={
+                      property.image_url
+                    }
+
+                    category={
+                      property.category
+                    }
+
+                  />
+                )
+              )}
+
+            </div>
+
+            {/* PAGINATION */}
+
+            {totalPages > 1 && (
+
+              <div
+                className="
+                  flex
+                  justify-center
+                  items-center
+                  gap-3
+                  mt-14
+                  flex-wrap
+                "
+              >
+
+                {/* PREVIOUS */}
+
+                <button
+
+                  onClick={() =>
+                    setCurrentPage(
+                      (prev) =>
+                        Math.max(
+                          prev - 1,
+                          1
+                        )
+                    )
                   }
 
-                  description={
-                    property.description
+                  disabled={
+                    currentPage === 1
                   }
 
-                  location={
-                    property.location
+                  className="
+                    px-5
+                    py-3
+                    rounded-2xl
+                    bg-white
+                    shadow
+                    font-semibold
+                    disabled:opacity-50
+                  "
+                >
+
+                  Previous
+
+                </button>
+
+                {/* PAGE NUMBERS */}
+
+                {Array.from(
+                  {
+                    length:
+                      totalPages,
+                  },
+
+                  (_, index) => (
+
+                    <button
+
+                      key={index}
+
+                      onClick={() =>
+                        setCurrentPage(
+                          index + 1
+                        )
+                      }
+
+                      className={`
+                        px-5
+                        py-3
+                        rounded-2xl
+                        font-semibold
+                        transition
+
+                        ${
+                          currentPage ===
+                          index + 1
+
+                            ? `
+                              bg-orange-500
+                              text-white
+                            `
+
+                            : `
+                              bg-white
+                              shadow
+                            `
+                        }
+                      `}
+                    >
+
+                      {index + 1}
+
+                    </button>
+                  )
+                )}
+
+                {/* NEXT */}
+
+                <button
+
+                  onClick={() =>
+                    setCurrentPage(
+                      (prev) =>
+                        Math.min(
+                          prev + 1,
+                          totalPages
+                        )
+                    )
                   }
 
-                  price={
-                    property.price
+                  disabled={
+                    currentPage ===
+                    totalPages
                   }
 
-                  image_url={
-                    property.image_url
-                  }
+                  className="
+                    px-5
+                    py-3
+                    rounded-2xl
+                    bg-white
+                    shadow
+                    font-semibold
+                    disabled:opacity-50
+                  "
+                >
 
-                  category={
-                    property.category
-                  }
+                  Next
 
-                />
-              )
+                </button>
+
+              </div>
             )}
 
-          </div>
+          </>
         )}
 
       </div>
