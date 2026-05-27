@@ -13,6 +13,8 @@ import {
   Trash2,
   Eye,
   Star,
+  Pencil,
+  X,
 } from "lucide-react"
 
 import { supabase }
@@ -85,6 +87,20 @@ LandlordDashboardPage() {
     galleryImages,
     setGalleryImages,
   ] = useState<string[]>([])
+
+  // EDITING STATES
+
+  const [
+    editingProperty,
+    setEditingProperty,
+  ] = useState<Property | null>(
+    null
+  )
+
+  const [
+    editImageUrl,
+    setEditImageUrl,
+  ] = useState("")
 
   const [
     formData,
@@ -182,8 +198,6 @@ LandlordDashboardPage() {
     try {
 
       setSubmitting(true)
-
-      // INSERT PROPERTY
 
       const {
 
@@ -312,6 +326,93 @@ LandlordDashboardPage() {
       alert(
         "Property created successfully"
       )
+
+    } catch (error) {
+
+      console.error(error)
+
+    } finally {
+
+      setSubmitting(false)
+    }
+  }
+
+  // UPDATE PROPERTY
+
+  async function updateProperty(
+    e: React.FormEvent
+  ) {
+
+    e.preventDefault()
+
+    if (!editingProperty)
+      return
+
+    try {
+
+      setSubmitting(true)
+
+      const {
+        error,
+      } = await supabase
+
+        .from("properties")
+
+        .update({
+
+          title:
+            editingProperty.title,
+
+          description:
+            editingProperty.description,
+
+          location:
+            editingProperty.location,
+
+          price:
+            editingProperty.price,
+
+          category:
+            editingProperty.category,
+
+          bedrooms:
+            editingProperty.bedrooms,
+
+          bathrooms:
+            editingProperty.bathrooms,
+
+          image_url:
+            editImageUrl ||
+            editingProperty.image_url,
+        })
+
+        .eq(
+          "id",
+          editingProperty.id
+        )
+
+      if (error) {
+
+        console.error(error)
+
+        alert(
+          "Failed to update property"
+        )
+
+        return
+      }
+
+      alert(
+        "Property updated successfully"
+      )
+
+      setEditingProperty(
+        null
+      )
+
+      setEditImageUrl("")
+
+      fetchProperties()
 
     } catch (error) {
 
@@ -566,7 +667,7 @@ LandlordDashboardPage() {
 
             </div>
 
-            {/* GALLERY IMAGES */}
+            {/* GALLERY */}
 
             <div>
 
@@ -882,7 +983,7 @@ LandlordDashboardPage() {
 
             </div>
 
-            {/* SUBMIT */}
+            {/* BUTTON */}
 
             <button
 
@@ -917,6 +1018,341 @@ LandlordDashboardPage() {
           </form>
 
         </div>
+
+        {/* EDIT MODAL */}
+
+        {editingProperty && (
+
+          <div
+            className="
+              fixed
+              inset-0
+              bg-black/50
+              z-50
+              flex
+              items-center
+              justify-center
+              p-6
+            "
+          >
+
+            <div
+              className="
+                bg-white
+                rounded-3xl
+                w-full
+                max-w-3xl
+                max-h-[90vh]
+                overflow-y-auto
+                p-8
+              "
+            >
+
+              {/* HEADER */}
+
+              <div
+                className="
+                  flex
+                  justify-between
+                  items-center
+                  mb-8
+                "
+              >
+
+                <h2
+                  className="
+                    text-4xl
+                    font-extrabold
+                  "
+                >
+
+                  Edit Property
+
+                </h2>
+
+                <button
+
+                  onClick={() =>
+                    setEditingProperty(
+                      null
+                    )
+                  }
+
+                  className="
+                    bg-gray-100
+                    hover:bg-gray-200
+                    p-3
+                    rounded-full
+                  "
+                >
+
+                  <X size={22} />
+
+                </button>
+
+              </div>
+
+              {/* FORM */}
+
+              <form
+
+                onSubmit={
+                  updateProperty
+                }
+
+                className="
+                  space-y-6
+                "
+              >
+
+                {/* IMAGE */}
+
+                <ImageUpload
+                  onUpload={
+                    setEditImageUrl
+                  }
+                />
+
+                {/* TITLE */}
+
+                <input
+
+                  type="text"
+
+                  value={
+                    editingProperty.title
+                  }
+
+                  onChange={(e) =>
+                    setEditingProperty({
+
+                      ...editingProperty,
+
+                      title:
+                        e.target.value,
+                    })
+                  }
+
+                  className="
+                    w-full
+                    border
+                    rounded-2xl
+                    px-5
+                    py-4
+                  "
+                />
+
+                {/* DESCRIPTION */}
+
+                <textarea
+
+                  rows={5}
+
+                  value={
+                    editingProperty.description
+                  }
+
+                  onChange={(e) =>
+                    setEditingProperty({
+
+                      ...editingProperty,
+
+                      description:
+                        e.target.value,
+                    })
+                  }
+
+                  className="
+                    w-full
+                    border
+                    rounded-2xl
+                    px-5
+                    py-4
+                  "
+                />
+
+                {/* GRID */}
+
+                <div
+                  className="
+                    grid
+                    md:grid-cols-2
+                    gap-5
+                  "
+                >
+
+                  <input
+
+                    type="text"
+
+                    value={
+                      editingProperty.location
+                    }
+
+                    onChange={(e) =>
+                      setEditingProperty({
+
+                        ...editingProperty,
+
+                        location:
+                          e.target.value,
+                      })
+                    }
+
+                    className="
+                      border
+                      rounded-2xl
+                      px-5
+                      py-4
+                    "
+                  />
+
+                  <input
+
+                    type="text"
+
+                    value={
+                      editingProperty.price
+                    }
+
+                    onChange={(e) =>
+                      setEditingProperty({
+
+                        ...editingProperty,
+
+                        price:
+                          e.target.value,
+                      })
+                    }
+
+                    className="
+                      border
+                      rounded-2xl
+                      px-5
+                      py-4
+                    "
+                  />
+
+                  <input
+
+                    type="text"
+
+                    value={
+                      editingProperty.category
+                    }
+
+                    onChange={(e) =>
+                      setEditingProperty({
+
+                        ...editingProperty,
+
+                        category:
+                          e.target.value,
+                      })
+                    }
+
+                    className="
+                      border
+                      rounded-2xl
+                      px-5
+                      py-4
+                    "
+                  />
+
+                  <input
+
+                    type="number"
+
+                    value={
+                      editingProperty.bedrooms
+                    }
+
+                    onChange={(e) =>
+                      setEditingProperty({
+
+                        ...editingProperty,
+
+                        bedrooms:
+                          Number(
+                            e.target.value
+                          ),
+                      })
+                    }
+
+                    className="
+                      border
+                      rounded-2xl
+                      px-5
+                      py-4
+                    "
+                  />
+
+                  <input
+
+                    type="number"
+
+                    value={
+                      editingProperty.bathrooms
+                    }
+
+                    onChange={(e) =>
+                      setEditingProperty({
+
+                        ...editingProperty,
+
+                        bathrooms:
+                          Number(
+                            e.target.value
+                          ),
+                      })
+                    }
+
+                    className="
+                      border
+                      rounded-2xl
+                      px-5
+                      py-4
+                    "
+                  />
+
+                </div>
+
+                {/* BUTTON */}
+
+                <button
+
+                  type="submit"
+
+                  disabled={
+                    submitting
+                  }
+
+                  className="
+                    w-full
+                    bg-orange-500
+                    hover:bg-orange-600
+                    text-white
+                    py-5
+                    rounded-2xl
+                    font-bold
+                    text-xl
+                  "
+                >
+
+                  {submitting
+
+                    ? "Updating..."
+
+                    : "Update Property"}
+
+                </button>
+
+              </form>
+
+            </div>
+
+          </div>
+        )}
 
         {/* PROPERTY LIST */}
 
@@ -1152,37 +1588,87 @@ LandlordDashboardPage() {
 
                       {/* ACTIONS */}
 
-                      <button
-
-                        onClick={() =>
-                          deleteProperty(
-                            property.id
-                          )
-                        }
-
+                      <div
                         className="
-                          w-full
-                          bg-red-500
-                          hover:bg-red-600
-                          text-white
-                          py-3
-                          rounded-2xl
-                          font-bold
                           flex
-                          items-center
-                          justify-center
-                          gap-2
-                          transition
+                          gap-4
                         "
                       >
 
-                        <Trash2
-                          size={18}
-                        />
+                        {/* EDIT */}
 
-                        Delete
+                        <button
 
-                      </button>
+                          onClick={() => {
+
+                            setEditingProperty(
+                              property
+                            )
+
+                            setEditImageUrl(
+                              property.image_url
+                            )
+                          }}
+
+                          className="
+                            flex-1
+                            bg-blue-500
+                            hover:bg-blue-600
+                            text-white
+                            py-3
+                            rounded-2xl
+                            font-bold
+                            flex
+                            items-center
+                            justify-center
+                            gap-2
+                            transition
+                          "
+                        >
+
+                          <Pencil
+                            size={18}
+                          />
+
+                          Edit
+
+                        </button>
+
+                        {/* DELETE */}
+
+                        <button
+
+                          onClick={() =>
+                            deleteProperty(
+                              property.id
+                            )
+                          }
+
+                          className="
+                            flex-1
+                            bg-red-500
+                            hover:bg-red-600
+                            text-white
+                            py-3
+                            rounded-2xl
+                            font-bold
+                            flex
+                            items-center
+                            justify-center
+                            gap-2
+                            transition
+                          "
+                        >
+
+                          <Trash2
+                            size={18}
+                          />
+
+                          Delete
+
+                        </button>
+
+                      </div>
 
                     </div>
 
