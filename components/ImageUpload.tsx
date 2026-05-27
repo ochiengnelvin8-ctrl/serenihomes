@@ -1,25 +1,25 @@
 "use client"
 
-import { useState }
-from "react"
-
 import {
-  Upload,
-  Loader2,
-} from "lucide-react"
+  useState,
+} from "react"
+
+import Image from "next/image"
 
 import { supabase }
 from "@/lib/supabase"
 
 interface Props {
 
-  onUpload: (
-    url: string
-  ) => void
+  onUpload:
+    (url: string) => void
 }
 
-export default function ImageUpload({
+export default function
+ImageUpload({
+
   onUpload,
+
 }: Props) {
 
   const [
@@ -27,83 +27,149 @@ export default function ImageUpload({
     setUploading,
   ] = useState(false)
 
-  async function handleUpload(
-    event:
-      React.ChangeEvent<HTMLInputElement>
+  const [
+    preview,
+    setPreview,
+  ] = useState("")
+
+  async function
+  handleUpload(
+    e: React.ChangeEvent<HTMLInputElement>
   ) {
 
-    const file =
-      event.target.files?.[0]
+    try {
 
-    if (!file)
-      return
+      const file =
+        e.target.files?.[0]
 
-    setUploading(true)
+      if (!file)
+        return
 
-    const fileExt =
-      file.name.split(".").pop()
+      setUploading(true)
 
-    const fileName =
+      // FILE NAME
 
-      `${Date.now()}.${fileExt}`
+      const fileExt =
 
-    const {
-      error,
-    } =
-      await supabase.storage
+        file.name
+        .split(".")
+        .pop()
+
+      const fileName =
+
+        `${Date.now()}.${fileExt}`
+
+      const filePath =
+        `properties/${fileName}`
+
+      // UPLOAD FILE
+
+      const {
+        error,
+      } = await supabase
+
+        .storage
 
         .from(
           "property-images"
         )
 
         .upload(
-          fileName,
+          filePath,
           file
         )
 
-    if (error) {
+      if (error) {
 
-      console.error(error)
+        console.error(error)
 
-      alert(
-        "Upload failed"
-      )
+        alert(
+          "Upload failed"
+        )
 
-      setUploading(false)
+        return
+      }
 
-      return
-    }
+      // GET PUBLIC URL
 
-    const {
-      data,
-    } =
-      supabase.storage
+      const {
+        data,
+      } = supabase
+
+        .storage
 
         .from(
           "property-images"
         )
 
         .getPublicUrl(
-          fileName
+          filePath
         )
 
-    onUpload(
-      data.publicUrl
-    )
+      const imageUrl =
+        data.publicUrl
 
-    setUploading(false)
+      setPreview(
+        imageUrl
+      )
+
+      onUpload(
+        imageUrl
+      )
+
+    } catch (error) {
+
+      console.error(error)
+
+    } finally {
+
+      setUploading(false)
+    }
   }
 
   return (
 
     <div>
 
+      {/* PREVIEW */}
+
+      {preview && (
+
+        <div
+          className="
+            relative
+            w-full
+            h-64
+            mb-5
+            rounded-3xl
+            overflow-hidden
+          "
+        >
+
+          <Image
+
+            src={preview}
+
+            alt="Preview"
+
+            fill
+
+            className="
+              object-cover
+            "
+          />
+
+        </div>
+      )}
+
+      {/* INPUT */}
+
       <label
         className="
           flex
-          flex-col
           items-center
           justify-center
+          w-full
           border-2
           border-dashed
           border-orange-300
@@ -115,63 +181,53 @@ export default function ImageUpload({
         "
       >
 
-        {uploading ? (
-
-          <div
-            className="
-              flex
-              items-center
-              gap-3
-            "
-          >
-
-            <Loader2
-              className="
-                animate-spin
-                text-orange-500
-              "
-            />
-
-            Uploading...
-
-          </div>
-
-        ) : (
-
-          <>
-
-            <Upload
-              size={40}
-              className="
-                text-orange-500
-                mb-4
-              "
-            />
-
-            <p
-              className="
-                font-semibold
-              "
-            >
-
-              Click to upload image
-
-            </p>
-
-          </>
-        )}
-
         <input
+
           type="file"
 
           accept="image/*"
 
+          hidden
+
           onChange={
             handleUpload
           }
-
-          className="hidden"
         />
+
+        <div
+          className="
+            text-center
+          "
+        >
+
+          <p
+            className="
+              text-xl
+              font-bold
+              text-orange-500
+              mb-2
+            "
+          >
+
+            {uploading
+
+              ? "Uploading..."
+
+              : "Click to upload image"}
+
+          </p>
+
+          <p
+            className="
+              text-gray-500
+            "
+          >
+
+            PNG, JPG, WEBP
+
+          </p>
+
+        </div>
 
       </label>
 

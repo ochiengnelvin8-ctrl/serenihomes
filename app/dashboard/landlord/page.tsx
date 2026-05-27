@@ -5,24 +5,21 @@ import {
   useState,
 } from "react"
 
-import Link from "next/link"
+import Image from "next/image"
 
 import {
+  Home,
   Plus,
   Trash2,
-  Pencil,
   Eye,
-  MapPin,
-  BedDouble,
-  Bath,
   Star,
 } from "lucide-react"
 
 import { supabase }
 from "@/lib/supabase"
 
-import PropertyImageUploader
-from "@/components/PropertyImageUploader"
+import ImageUpload
+from "@/components/ImageUpload"
 
 interface Property {
 
@@ -40,15 +37,13 @@ interface Property {
 
   category: string
 
-  featured?: boolean
-
   bedrooms?: number
 
   bathrooms?: number
 
   views?: number
 
-  created_at?: string
+  featured?: boolean
 }
 
 export default function
@@ -65,41 +60,67 @@ LandlordDashboardPage() {
   ] = useState(true)
 
   const [
+    submitting,
+    setSubmitting,
+  ] = useState(false)
+
+  const [
     userId,
     setUserId,
-  ] = useState<string>("")
+  ] = useState("")
 
-  // FETCH USER + PROPERTIES
+  const [
+    imageUrl,
+    setImageUrl,
+  ] = useState("")
+
+  const [
+    formData,
+    setFormData,
+  ] = useState({
+
+      title: "",
+
+      description: "",
+
+      location: "",
+
+      price: "",
+
+      category: "",
+
+      bedrooms: "",
+
+      bathrooms: "",
+
+      landlord_phone: "",
+    }
+  )
+
+  // FETCH USER
+
+  async function fetchUser() {
+
+    const {
+      data,
+    } =
+      await supabase.auth.getUser()
+
+    if (data.user) {
+
+      setUserId(
+        data.user.id
+      )
+    }
+  }
+
+  // FETCH PROPERTIES
 
   async function fetchProperties() {
 
     try {
 
       setLoading(true)
-
-      // CURRENT USER
-
-      const {
-        data: authData,
-      } =
-        await supabase.auth.getUser()
-
-      const currentUser =
-
-        authData.user
-
-      if (!currentUser) {
-
-        setLoading(false)
-
-        return
-      }
-
-      setUserId(
-        currentUser.id
-      )
-
-      // FETCH LANDLORD PROPERTIES
 
       const {
         data,
@@ -109,11 +130,6 @@ LandlordDashboardPage() {
         .from("properties")
 
         .select("*")
-
-        .eq(
-          "user_id",
-          currentUser.id
-        )
 
         .order(
           "created_at",
@@ -143,19 +159,127 @@ LandlordDashboardPage() {
     }
   }
 
+  // CREATE PROPERTY
+
+  async function createProperty(
+    e: React.FormEvent
+  ) {
+
+    e.preventDefault()
+
+    try {
+
+      setSubmitting(true)
+
+      const {
+        error,
+      } = await supabase
+
+        .from("properties")
+
+        .insert({
+
+          user_id:
+            userId,
+
+          title:
+            formData.title,
+
+          description:
+            formData.description,
+
+          location:
+            formData.location,
+
+          price:
+            formData.price,
+
+          category:
+            formData.category,
+
+          bedrooms:
+            Number(
+              formData.bedrooms
+            ),
+
+          bathrooms:
+            Number(
+              formData.bathrooms
+            ),
+
+          landlord_phone:
+            formData.landlord_phone,
+
+          image_url:
+            imageUrl,
+
+          views: 0,
+
+          featured: false,
+        })
+
+      if (error) {
+
+        console.error(error)
+
+        alert(
+          "Failed to create property"
+        )
+
+        return
+      }
+
+      // RESET FORM
+
+      setFormData({
+
+        title: "",
+
+        description: "",
+
+        location: "",
+
+        price: "",
+
+        category: "",
+
+        bedrooms: "",
+
+        bathrooms: "",
+
+        landlord_phone: "",
+      })
+
+      setImageUrl("")
+
+      fetchProperties()
+
+      alert(
+        "Property created successfully"
+      )
+
+    } catch (error) {
+
+      console.error(error)
+
+    } finally {
+
+      setSubmitting(false)
+    }
+  }
+
   // DELETE PROPERTY
 
   async function deleteProperty(
-    propertyId: string
+    id: string
   ) {
 
-    const confirmed =
-
+    const confirmDelete =
       confirm(
-        "Are you sure you want to delete this property?"
+        "Delete this property?"
       )
 
-    if (!confirmed)
+    if (!confirmDelete)
       return
 
     try {
@@ -168,75 +292,11 @@ LandlordDashboardPage() {
 
         .delete()
 
-        .eq(
-          "id",
-          propertyId
-        )
+        .eq("id", id)
 
       if (error) {
 
         console.error(error)
-
-        alert(
-          "Failed to delete property"
-        )
-
-        return
-      }
-
-      setProperties(
-        (
-          prev
-        ) =>
-          prev.filter(
-            (property) =>
-              property.id !==
-              propertyId
-          )
-      )
-
-      alert(
-        "Property deleted successfully"
-      )
-
-    } catch (error) {
-
-      console.error(error)
-    }
-  }
-
-  // TOGGLE FEATURED
-
-  async function toggleFeatured(
-    propertyId: string,
-    currentValue: boolean
-  ) {
-
-    try {
-
-      const {
-        error,
-      } = await supabase
-
-        .from("properties")
-
-        .update({
-          featured:
-            !currentValue,
-        })
-
-        .eq(
-          "id",
-          propertyId
-        )
-
-      if (error) {
-
-        console.error(error)
-
-        alert(
-          "Failed to update featured status"
-        )
 
         return
       }
@@ -251,41 +311,11 @@ LandlordDashboardPage() {
 
   useEffect(() => {
 
+    fetchUser()
+
     fetchProperties()
 
   }, [])
-
-  // LOADING
-
-  if (loading) {
-
-    return (
-
-      <main
-        className="
-          min-h-screen
-          flex
-          items-center
-          justify-center
-          bg-orange-50
-        "
-      >
-
-        <h1
-          className="
-            text-3xl
-            font-bold
-            text-orange-500
-          "
-        >
-
-          Loading dashboard...
-
-        </h1>
-
-      </main>
-    )
-  }
 
   return (
 
@@ -311,9 +341,9 @@ LandlordDashboardPage() {
           className="
             flex
             flex-col
-            md:flex-row
-            md:items-center
-            md:justify-between
+            lg:flex-row
+            lg:items-center
+            lg:justify-between
             gap-5
             mb-10
           "
@@ -325,7 +355,7 @@ LandlordDashboardPage() {
               className="
                 text-5xl
                 font-extrabold
-                mb-4
+                mb-3
               "
             >
 
@@ -335,538 +365,747 @@ LandlordDashboardPage() {
 
             <p
               className="
-                text-lg
                 text-gray-600
+                text-lg
               "
             >
 
-              Manage your property
-              listings and uploads.
+              Manage your
+              property listings
 
             </p>
 
           </div>
-
-          <Link
-
-            href="/dashboard/landlord/add-property"
-
-            className="
-              inline-flex
-              items-center
-              gap-3
-              bg-orange-500
-              hover:bg-orange-600
-              text-white
-              px-7
-              py-4
-              rounded-2xl
-              font-bold
-              transition
-            "
-          >
-
-            <Plus size={22} />
-
-            Add Property
-
-          </Link>
-
-        </div>
-
-        {/* EMPTY */}
-
-        {properties.length === 0 && (
 
           <div
             className="
               bg-white
               rounded-3xl
+              px-8
+              py-5
               shadow-md
-              p-16
-              text-center
             "
           >
+
+            <div
+              className="
+                flex
+                items-center
+                gap-4
+              "
+            >
+
+              <Home
+                size={38}
+                className="
+                  text-orange-500
+                "
+              />
+
+              <div>
+
+                <p
+                  className="
+                    text-gray-500
+                  "
+                >
+
+                  Total Properties
+
+                </p>
+
+                <h2
+                  className="
+                    text-4xl
+                    font-extrabold
+                  "
+                >
+
+                  {
+                    properties.length
+                  }
+
+                </h2>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* CREATE PROPERTY */}
+
+        <div
+          className="
+            bg-white
+            rounded-3xl
+            shadow-md
+            p-8
+            mb-12
+          "
+        >
+
+          <div
+            className="
+              flex
+              items-center
+              gap-3
+              mb-8
+            "
+          >
+
+            <Plus
+              size={32}
+              className="
+                text-orange-500
+              "
+            />
 
             <h2
               className="
                 text-3xl
                 font-bold
-                mb-4
               "
             >
 
-              No Properties Yet
+              Add New Property
 
             </h2>
 
-            <p
+          </div>
+
+          <form
+
+            onSubmit={
+              createProperty
+            }
+
+            className="
+              space-y-7
+            "
+          >
+
+            {/* IMAGE UPLOAD */}
+
+            <ImageUpload
+              onUpload={
+                setImageUrl
+              }
+            />
+
+            {/* TITLE */}
+
+            <input
+
+              type="text"
+
+              placeholder="
+              Property title
+              "
+
+              required
+
+              value={
+                formData.title
+              }
+
+              onChange={(e) =>
+                setFormData({
+
+                  ...formData,
+
+                  title:
+                    e.target.value,
+                })
+              }
+
               className="
-                text-gray-600
-                text-lg
-                mb-8
+                w-full
+                border
+                rounded-2xl
+                px-5
+                py-4
+                outline-none
+                focus:border-orange-500
+              "
+            />
+
+            {/* DESCRIPTION */}
+
+            <textarea
+
+              placeholder="
+              Property description
+              "
+
+              required
+
+              rows={5}
+
+              value={
+                formData.description
+              }
+
+              onChange={(e) =>
+                setFormData({
+
+                  ...formData,
+
+                  description:
+                    e.target.value,
+                })
+              }
+
+              className="
+                w-full
+                border
+                rounded-2xl
+                px-5
+                py-4
+                outline-none
+                focus:border-orange-500
+              "
+            />
+
+            {/* GRID */}
+
+            <div
+              className="
+                grid
+                md:grid-cols-2
+                gap-6
               "
             >
 
-              Start by adding your
-              first property listing.
+              <input
 
-            </p>
+                type="text"
 
-            <Link
+                placeholder="
+                Location
+                "
 
-              href="/dashboard/landlord/add-property"
+                required
+
+                value={
+                  formData.location
+                }
+
+                onChange={(e) =>
+                  setFormData({
+
+                    ...formData,
+
+                    location:
+                      e.target.value,
+                  })
+                }
+
+                className="
+                  border
+                  rounded-2xl
+                  px-5
+                  py-4
+                  outline-none
+                  focus:border-orange-500
+                "
+              />
+
+              <input
+
+                type="number"
+
+                placeholder="
+                Price
+                "
+
+                required
+
+                value={
+                  formData.price
+                }
+
+                onChange={(e) =>
+                  setFormData({
+
+                    ...formData,
+
+                    price:
+                      e.target.value,
+                  })
+                }
+
+                className="
+                  border
+                  rounded-2xl
+                  px-5
+                  py-4
+                  outline-none
+                  focus:border-orange-500
+                "
+              />
+
+              <input
+
+                type="text"
+
+                placeholder="
+                Category
+                "
+
+                required
+
+                value={
+                  formData.category
+                }
+
+                onChange={(e) =>
+                  setFormData({
+
+                    ...formData,
+
+                    category:
+                      e.target.value,
+                  })
+                }
+
+                className="
+                  border
+                  rounded-2xl
+                  px-5
+                  py-4
+                  outline-none
+                  focus:border-orange-500
+                "
+              />
+
+              <input
+
+                type="text"
+
+                placeholder="
+                Phone Number
+                "
+
+                required
+
+                value={
+                  formData.landlord_phone
+                }
+
+                onChange={(e) =>
+                  setFormData({
+
+                    ...formData,
+
+                    landlord_phone:
+                      e.target.value,
+                  })
+                }
+
+                className="
+                  border
+                  rounded-2xl
+                  px-5
+                  py-4
+                  outline-none
+                  focus:border-orange-500
+                "
+              />
+
+              <input
+
+                type="number"
+
+                placeholder="
+                Bedrooms
+                "
+
+                required
+
+                value={
+                  formData.bedrooms
+                }
+
+                onChange={(e) =>
+                  setFormData({
+
+                    ...formData,
+
+                    bedrooms:
+                      e.target.value,
+                  })
+                }
+
+                className="
+                  border
+                  rounded-2xl
+                  px-5
+                  py-4
+                  outline-none
+                  focus:border-orange-500
+                "
+              />
+
+              <input
+
+                type="number"
+
+                placeholder="
+                Bathrooms
+                "
+
+                required
+
+                value={
+                  formData.bathrooms
+                }
+
+                onChange={(e) =>
+                  setFormData({
+
+                    ...formData,
+
+                    bathrooms:
+                      e.target.value,
+                  })
+                }
+
+                className="
+                  border
+                  rounded-2xl
+                  px-5
+                  py-4
+                  outline-none
+                  focus:border-orange-500
+                "
+              />
+
+            </div>
+
+            {/* SUBMIT */}
+
+            <button
+
+              type="submit"
+
+              disabled={
+                submitting
+              }
 
               className="
-                inline-flex
-                items-center
-                gap-3
+                w-full
                 bg-orange-500
                 hover:bg-orange-600
+                disabled:opacity-50
                 text-white
-                px-7
-                py-4
+                py-5
                 rounded-2xl
                 font-bold
+                text-xl
                 transition
               "
             >
 
-              <Plus size={22} />
+              {submitting
 
-              Add Property
+                ? "Creating Property..."
 
-            </Link>
+                : "Create Property"}
 
-          </div>
-        )}
+            </button>
 
-        {/* PROPERTY GRID */}
+          </form>
 
-        {properties.length > 0 && (
+        </div>
 
-          <div
+        {/* PROPERTY LIST */}
+
+        <div>
+
+          <h2
             className="
-              grid
-              md:grid-cols-2
-              xl:grid-cols-3
-              gap-8
+              text-4xl
+              font-extrabold
+              mb-8
             "
           >
 
-            {properties.map(
-              (property) => (
+            Your Properties
 
-                <div
+          </h2>
 
-                  key={property.id}
+          {loading ? (
 
-                  className="
-                    bg-white
-                    rounded-3xl
-                    shadow-md
-                    overflow-hidden
-                  "
-                >
+            <div
+              className="
+                text-center
+                py-20
+              "
+            >
 
-                  {/* IMAGE */}
+              <h2
+                className="
+                  text-3xl
+                  font-bold
+                  text-orange-500
+                "
+              >
+
+                Loading...
+
+              </h2>
+
+            </div>
+
+          ) : properties.length === 0 ? (
+
+            <div
+              className="
+                bg-white
+                rounded-3xl
+                shadow-md
+                p-14
+                text-center
+              "
+            >
+
+              <h2
+                className="
+                  text-3xl
+                  font-bold
+                  mb-4
+                "
+              >
+
+                No properties yet
+
+              </h2>
+
+              <p
+                className="
+                  text-gray-500
+                "
+              >
+
+                Create your first
+                listing above.
+
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div
+              className="
+                grid
+                md:grid-cols-2
+                xl:grid-cols-3
+                gap-8
+              "
+            >
+
+              {properties.map(
+                (property) => (
 
                   <div
+
+                    key={
+                      property.id
+                    }
+
                     className="
-                      relative
+                      bg-white
+                      rounded-3xl
+                      overflow-hidden
+                      shadow-md
                     "
                   >
 
-                    <img
-
-                      src={
-                        property.image_url
-                      }
-
-                      alt={
-                        property.title
-                      }
-
-                      className="
-                        w-full
-                        h-64
-                        object-cover
-                      "
-                    />
-
-                    {/* FEATURED BADGE */}
-
-                    {property.featured && (
-
-                      <div
-                        className="
-                          absolute
-                          top-4
-                          left-4
-                          bg-yellow-400
-                          text-black
-                          px-4
-                          py-2
-                          rounded-full
-                          font-bold
-                          shadow-lg
-                          flex
-                          items-center
-                          gap-2
-                        "
-                      >
-
-                        <Star
-                          size={16}
-                        />
-
-                        Featured
-
-                      </div>
-                    )}
-
-                  </div>
-
-                  {/* CONTENT */}
-
-                  <div
-                    className="
-                      p-6
-                    "
-                  >
+                    {/* IMAGE */}
 
                     <div
                       className="
-                        flex
-                        items-start
-                        justify-between
-                        gap-4
-                        mb-4
+                        relative
+                        h-64
                       "
                     >
 
-                      <h2
-                        className="
-                          text-2xl
-                          font-bold
-                        "
-                      >
+                      <Image
 
-                        {
+                        src={
+                          property.image_url
+                        }
+
+                        alt={
                           property.title
                         }
 
-                      </h2>
+                        fill
 
-                      <span
                         className="
-                          bg-orange-100
-                          text-orange-600
-                          px-4
-                          py-2
-                          rounded-full
-                          text-sm
-                          font-semibold
-                          whitespace-nowrap
+                          object-cover
                         "
-                      >
-
-                        {
-                          property.category
-                        }
-
-                      </span>
-
-                    </div>
-
-                    {/* LOCATION */}
-
-                    <div
-                      className="
-                        flex
-                        items-center
-                        gap-2
-                        text-gray-600
-                        mb-4
-                      "
-                    >
-
-                      <MapPin
-                        size={18}
                       />
 
-                      {
-                        property.location
-                      }
-
                     </div>
 
-                    {/* DESCRIPTION */}
-
-                    <p
-                      className="
-                        text-gray-600
-                        leading-7
-                        mb-6
-                        line-clamp-3
-                      "
-                    >
-
-                      {
-                        property.description
-                      }
-
-                    </p>
-
-                    {/* PROPERTY INFO */}
+                    {/* CONTENT */}
 
                     <div
                       className="
-                        flex
-                        flex-wrap
-                        gap-4
-                        mb-6
+                        p-6
                       "
                     >
 
                       <div
                         className="
                           flex
-                          items-center
-                          gap-2
-                          bg-gray-100
-                          px-4
-                          py-2
-                          rounded-2xl
+                          justify-between
+                          items-start
+                          gap-4
+                          mb-4
                         "
                       >
 
-                        <BedDouble
-                          size={18}
-                        />
+                        <h3
+                          className="
+                            text-2xl
+                            font-bold
+                          "
+                        >
 
-                        {
-                          property.bedrooms || 0
-                        } Beds
+                          {
+                            property.title
+                          }
+
+                        </h3>
+
+                        {property.featured && (
+
+                          <Star
+                            size={22}
+                            className="
+                              text-yellow-500
+                            "
+                          />
+                        )}
 
                       </div>
+
+                      <p
+                        className="
+                          text-gray-500
+                          mb-4
+                        "
+                      >
+
+                        {
+                          property.location
+                        }
+
+                      </p>
 
                       <div
                         className="
                           flex
+                          justify-between
                           items-center
-                          gap-2
-                          bg-gray-100
-                          px-4
-                          py-2
-                          rounded-2xl
+                          mb-6
                         "
                       >
 
-                        <Bath
-                          size={18}
-                        />
+                        <div
+                          className="
+                            text-orange-500
+                            font-extrabold
+                            text-2xl
+                          "
+                        >
 
-                        {
-                          property.bathrooms || 0
-                        } Baths
+                          Ksh {
+                            property.price
+                          }
+
+                        </div>
+
+                        <div
+                          className="
+                            flex
+                            items-center
+                            gap-2
+                            text-gray-500
+                          "
+                        >
+
+                          <Eye
+                            size={18}
+                          />
+
+                          {
+                            property.views || 0
+                          }
+
+                        </div>
 
                       </div>
+
+                      {/* ACTIONS */}
 
                       <div
                         className="
                           flex
-                          items-center
-                          gap-2
-                          bg-blue-100
-                          text-blue-600
-                          px-4
-                          py-2
-                          rounded-2xl
-                          font-semibold
+                          gap-4
                         "
                       >
 
-                        <Eye
-                          size={18}
-                        />
+                        <button
 
-                        {
-                          property.views || 0
-                        } Views
+                          onClick={() =>
+                            deleteProperty(
+                              property.id
+                            )
+                          }
+
+                          className="
+                            flex-1
+                            bg-red-500
+                            hover:bg-red-600
+                            text-white
+                            py-3
+                            rounded-2xl
+                            font-bold
+                            flex
+                            items-center
+                            justify-center
+                            gap-2
+                            transition
+                          "
+                        >
+
+                          <Trash2
+                            size={18}
+                          />
+
+                          Delete
+
+                        </button>
 
                       </div>
-
-                    </div>
-
-                    {/* PRICE */}
-
-                    <div
-                      className="
-                        text-3xl
-                        font-extrabold
-                        text-orange-500
-                        mb-8
-                      "
-                    >
-
-                      Ksh {
-                        property.price
-                      }
-
-                    </div>
-
-                    {/* ACTIONS */}
-
-                    <div
-                      className="
-                        grid
-                        grid-cols-2
-                        gap-4
-                        mb-6
-                      "
-                    >
-
-                      {/* EDIT */}
-
-                      <Link
-
-                        href={`/dashboard/landlord/edit/${property.id}`}
-
-                        className="
-                          flex
-                          items-center
-                          justify-center
-                          gap-2
-                          bg-gray-900
-                          hover:bg-black
-                          text-white
-                          py-4
-                          rounded-2xl
-                          font-semibold
-                          transition
-                        "
-                      >
-
-                        <Pencil
-                          size={18}
-                        />
-
-                        Edit
-
-                      </Link>
-
-                      {/* DELETE */}
-
-                      <button
-
-                        onClick={() =>
-                          deleteProperty(
-                            property.id
-                          )
-                        }
-
-                        className="
-                          flex
-                          items-center
-                          justify-center
-                          gap-2
-                          bg-red-500
-                          hover:bg-red-600
-                          text-white
-                          py-4
-                          rounded-2xl
-                          font-semibold
-                          transition
-                        "
-                      >
-
-                        <Trash2
-                          size={18}
-                        />
-
-                        Delete
-
-                      </button>
-
-                    </div>
-
-                    {/* FEATURE TOGGLE */}
-
-                    <button
-
-                      onClick={() =>
-                        toggleFeatured(
-                          property.id,
-                          !!property.featured
-                        )
-                      }
-
-                      className={`
-                        w-full
-                        py-4
-                        rounded-2xl
-                        font-bold
-                        transition
-                        mb-6
-
-                        ${
-                          property.featured
-
-                            ? `
-                              bg-yellow-400
-                              text-black
-                              hover:bg-yellow-500
-                            `
-
-                            : `
-                              bg-orange-500
-                              text-white
-                              hover:bg-orange-600
-                            `
-                        }
-                      `}
-                    >
-
-                      {property.featured
-
-                        ? "Remove Featured"
-
-                        : "Make Featured"}
-
-                    </button>
-
-                    {/* IMAGE UPLOADER */}
-
-                    <div
-                      className="
-                        border-t
-                        pt-6
-                      "
-                    >
-
-                      <PropertyImageUploader
-
-                        propertyId={
-                          property.id
-                        }
-
-                        onUploadComplete={
-                          fetchProperties
-                        }
-
-                      />
 
                     </div>
 
                   </div>
+                )
+              )}
 
-                </div>
-              )
-            )}
+            </div>
+          )}
 
-          </div>
-        )}
+        </div>
 
       </div>
 
