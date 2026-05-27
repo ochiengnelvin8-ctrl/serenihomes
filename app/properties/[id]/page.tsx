@@ -41,9 +41,14 @@ from "@/components/PropertyMap"
 import BookingForm
 from "@/components/BookingForm"
 
+import ChatBox
+from "@/components/ChatBox"
+
 interface Property {
 
   id: string
+
+  user_id: string
 
   title: string
 
@@ -773,10 +778,32 @@ PropertyDetailsPage() {
 
             {/* BOOKING FORM */}
 
-            <BookingForm
+            <div
+              className="
+                mb-10
+              "
+            >
+
+              <BookingForm
+                propertyId={
+                  property.id
+                }
+              />
+
+            </div>
+
+            {/* REALTIME CHAT */}
+
+            <ChatBox
+
               propertyId={
                 property.id
               }
+
+              receiverId={
+                property.user_id
+              }
+
             />
 
           </div>
