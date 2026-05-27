@@ -88,7 +88,7 @@ LandlordDashboardPage() {
     setGalleryImages,
   ] = useState<string[]>([])
 
-  // EDITING STATES
+  // EDIT STATES
 
   const [
     editingProperty,
@@ -101,6 +101,8 @@ LandlordDashboardPage() {
     editImageUrl,
     setEditImageUrl,
   ] = useState("")
+
+  // FORM STATE
 
   const [
     formData,
@@ -122,6 +124,8 @@ LandlordDashboardPage() {
       bathrooms: "",
 
       landlord_phone: "",
+
+      featured: false,
     }
   )
 
@@ -247,7 +251,8 @@ LandlordDashboardPage() {
 
           views: 0,
 
-          featured: false,
+          featured:
+            formData.featured,
         })
 
         .select()
@@ -315,6 +320,8 @@ LandlordDashboardPage() {
         bathrooms: "",
 
         landlord_phone: "",
+
+        featured: false,
       })
 
       setImageUrl("")
@@ -384,6 +391,9 @@ LandlordDashboardPage() {
           image_url:
             editImageUrl ||
             editingProperty.image_url,
+
+          featured:
+            editingProperty.featured,
         })
 
         .eq(
@@ -983,6 +993,54 @@ LandlordDashboardPage() {
 
             </div>
 
+            {/* FEATURED */}
+
+            <div
+              className="
+                flex
+                items-center
+                gap-4
+              "
+            >
+
+              <input
+
+                type="checkbox"
+
+                checked={
+                  formData.featured
+                }
+
+                onChange={(e) =>
+                  setFormData({
+
+                    ...formData,
+
+                    featured:
+                      e.target.checked,
+                  })
+                }
+
+                className="
+                  w-6
+                  h-6
+                  accent-orange-500
+                "
+              />
+
+              <label
+                className="
+                  text-lg
+                  font-semibold
+                "
+              >
+
+                Mark as Featured Property
+
+              </label>
+
+            </div>
+
             {/* BUTTON */}
 
             <button
@@ -1016,668 +1074,6 @@ LandlordDashboardPage() {
             </button>
 
           </form>
-
-        </div>
-
-        {/* EDIT MODAL */}
-
-        {editingProperty && (
-
-          <div
-            className="
-              fixed
-              inset-0
-              bg-black/50
-              z-50
-              flex
-              items-center
-              justify-center
-              p-6
-            "
-          >
-
-            <div
-              className="
-                bg-white
-                rounded-3xl
-                w-full
-                max-w-3xl
-                max-h-[90vh]
-                overflow-y-auto
-                p-8
-              "
-            >
-
-              {/* HEADER */}
-
-              <div
-                className="
-                  flex
-                  justify-between
-                  items-center
-                  mb-8
-                "
-              >
-
-                <h2
-                  className="
-                    text-4xl
-                    font-extrabold
-                  "
-                >
-
-                  Edit Property
-
-                </h2>
-
-                <button
-
-                  onClick={() =>
-                    setEditingProperty(
-                      null
-                    )
-                  }
-
-                  className="
-                    bg-gray-100
-                    hover:bg-gray-200
-                    p-3
-                    rounded-full
-                  "
-                >
-
-                  <X size={22} />
-
-                </button>
-
-              </div>
-
-              {/* FORM */}
-
-              <form
-
-                onSubmit={
-                  updateProperty
-                }
-
-                className="
-                  space-y-6
-                "
-              >
-
-                {/* IMAGE */}
-
-                <ImageUpload
-                  onUpload={
-                    setEditImageUrl
-                  }
-                />
-
-                {/* TITLE */}
-
-                <input
-
-                  type="text"
-
-                  value={
-                    editingProperty.title
-                  }
-
-                  onChange={(e) =>
-                    setEditingProperty({
-
-                      ...editingProperty,
-
-                      title:
-                        e.target.value,
-                    })
-                  }
-
-                  className="
-                    w-full
-                    border
-                    rounded-2xl
-                    px-5
-                    py-4
-                  "
-                />
-
-                {/* DESCRIPTION */}
-
-                <textarea
-
-                  rows={5}
-
-                  value={
-                    editingProperty.description
-                  }
-
-                  onChange={(e) =>
-                    setEditingProperty({
-
-                      ...editingProperty,
-
-                      description:
-                        e.target.value,
-                    })
-                  }
-
-                  className="
-                    w-full
-                    border
-                    rounded-2xl
-                    px-5
-                    py-4
-                  "
-                />
-
-                {/* GRID */}
-
-                <div
-                  className="
-                    grid
-                    md:grid-cols-2
-                    gap-5
-                  "
-                >
-
-                  <input
-
-                    type="text"
-
-                    value={
-                      editingProperty.location
-                    }
-
-                    onChange={(e) =>
-                      setEditingProperty({
-
-                        ...editingProperty,
-
-                        location:
-                          e.target.value,
-                      })
-                    }
-
-                    className="
-                      border
-                      rounded-2xl
-                      px-5
-                      py-4
-                    "
-                  />
-
-                  <input
-
-                    type="text"
-
-                    value={
-                      editingProperty.price
-                    }
-
-                    onChange={(e) =>
-                      setEditingProperty({
-
-                        ...editingProperty,
-
-                        price:
-                          e.target.value,
-                      })
-                    }
-
-                    className="
-                      border
-                      rounded-2xl
-                      px-5
-                      py-4
-                    "
-                  />
-
-                  <input
-
-                    type="text"
-
-                    value={
-                      editingProperty.category
-                    }
-
-                    onChange={(e) =>
-                      setEditingProperty({
-
-                        ...editingProperty,
-
-                        category:
-                          e.target.value,
-                      })
-                    }
-
-                    className="
-                      border
-                      rounded-2xl
-                      px-5
-                      py-4
-                    "
-                  />
-
-                  <input
-
-                    type="number"
-
-                    value={
-                      editingProperty.bedrooms
-                    }
-
-                    onChange={(e) =>
-                      setEditingProperty({
-
-                        ...editingProperty,
-
-                        bedrooms:
-                          Number(
-                            e.target.value
-                          ),
-                      })
-                    }
-
-                    className="
-                      border
-                      rounded-2xl
-                      px-5
-                      py-4
-                    "
-                  />
-
-                  <input
-
-                    type="number"
-
-                    value={
-                      editingProperty.bathrooms
-                    }
-
-                    onChange={(e) =>
-                      setEditingProperty({
-
-                        ...editingProperty,
-
-                        bathrooms:
-                          Number(
-                            e.target.value
-                          ),
-                      })
-                    }
-
-                    className="
-                      border
-                      rounded-2xl
-                      px-5
-                      py-4
-                    "
-                  />
-
-                </div>
-
-                {/* BUTTON */}
-
-                <button
-
-                  type="submit"
-
-                  disabled={
-                    submitting
-                  }
-
-                  className="
-                    w-full
-                    bg-orange-500
-                    hover:bg-orange-600
-                    text-white
-                    py-5
-                    rounded-2xl
-                    font-bold
-                    text-xl
-                  "
-                >
-
-                  {submitting
-
-                    ? "Updating..."
-
-                    : "Update Property"}
-
-                </button>
-
-              </form>
-
-            </div>
-
-          </div>
-        )}
-
-        {/* PROPERTY LIST */}
-
-        <div>
-
-          <h2
-            className="
-              text-4xl
-              font-extrabold
-              mb-8
-            "
-          >
-
-            Your Properties
-
-          </h2>
-
-          {loading ? (
-
-            <div
-              className="
-                text-center
-                py-20
-              "
-            >
-
-              <h2
-                className="
-                  text-3xl
-                  font-bold
-                  text-orange-500
-                "
-              >
-
-                Loading...
-
-              </h2>
-
-            </div>
-
-          ) : properties.length === 0 ? (
-
-            <div
-              className="
-                bg-white
-                rounded-3xl
-                shadow-md
-                p-14
-                text-center
-              "
-            >
-
-              <h2
-                className="
-                  text-3xl
-                  font-bold
-                  mb-4
-                "
-              >
-
-                No properties yet
-
-              </h2>
-
-              <p
-                className="
-                  text-gray-500
-                "
-              >
-
-                Create your first
-                listing above.
-
-              </p>
-
-            </div>
-
-          ) : (
-
-            <div
-              className="
-                grid
-                md:grid-cols-2
-                xl:grid-cols-3
-                gap-8
-              "
-            >
-
-              {properties.map(
-                (property) => (
-
-                  <div
-
-                    key={
-                      property.id
-                    }
-
-                    className="
-                      bg-white
-                      rounded-3xl
-                      overflow-hidden
-                      shadow-md
-                    "
-                  >
-
-                    {/* IMAGE */}
-
-                    <div
-                      className="
-                        relative
-                        h-64
-                      "
-                    >
-
-                      <Image
-
-                        src={
-                          property.image_url
-                        }
-
-                        alt={
-                          property.title
-                        }
-
-                        fill
-
-                        className="
-                          object-cover
-                        "
-                      />
-
-                    </div>
-
-                    {/* CONTENT */}
-
-                    <div
-                      className="
-                        p-6
-                      "
-                    >
-
-                      <div
-                        className="
-                          flex
-                          justify-between
-                          items-start
-                          gap-4
-                          mb-4
-                        "
-                      >
-
-                        <h3
-                          className="
-                            text-2xl
-                            font-bold
-                          "
-                        >
-
-                          {
-                            property.title
-                          }
-
-                        </h3>
-
-                        {property.featured && (
-
-                          <Star
-                            size={22}
-                            className="
-                              text-yellow-500
-                            "
-                          />
-                        )}
-
-                      </div>
-
-                      <p
-                        className="
-                          text-gray-500
-                          mb-4
-                        "
-                      >
-
-                        {
-                          property.location
-                        }
-
-                      </p>
-
-                      <div
-                        className="
-                          flex
-                          justify-between
-                          items-center
-                          mb-6
-                        "
-                      >
-
-                        <div
-                          className="
-                            text-orange-500
-                            font-extrabold
-                            text-2xl
-                          "
-                        >
-
-                          Ksh {
-                            property.price
-                          }
-
-                        </div>
-
-                        <div
-                          className="
-                            flex
-                            items-center
-                            gap-2
-                            text-gray-500
-                          "
-                        >
-
-                          <Eye
-                            size={18}
-                          />
-
-                          {
-                            property.views || 0
-                          }
-
-                        </div>
-
-                      </div>
-
-                      {/* ACTIONS */}
-
-                      <div
-                        className="
-                          flex
-                          gap-4
-                        "
-                      >
-
-                        {/* EDIT */}
-
-                        <button
-
-                          onClick={() => {
-
-                            setEditingProperty(
-                              property
-                            )
-
-                            setEditImageUrl(
-                              property.image_url
-                            )
-                          }}
-
-                          className="
-                            flex-1
-                            bg-blue-500
-                            hover:bg-blue-600
-                            text-white
-                            py-3
-                            rounded-2xl
-                            font-bold
-                            flex
-                            items-center
-                            justify-center
-                            gap-2
-                            transition
-                          "
-                        >
-
-                          <Pencil
-                            size={18}
-                          />
-
-                          Edit
-
-                        </button>
-
-                        {/* DELETE */}
-
-                        <button
-
-                          onClick={() =>
-                            deleteProperty(
-                              property.id
-                            )
-                          }
-
-                          className="
-                            flex-1
-                            bg-red-500
-                            hover:bg-red-600
-                            text-white
-                            py-3
-                            rounded-2xl
-                            font-bold
-                            flex
-                            items-center
-                            justify-center
-                            gap-2
-                            transition
-                          "
-                        >
-
-                          <Trash2
-                            size={18}
-                          />
-
-                          Delete
-
-                        </button>
-
-                      </div>
-
-                    </div>
-
-                  </div>
-                )
-              )}
-
-            </div>
-          )}
 
         </div>
 

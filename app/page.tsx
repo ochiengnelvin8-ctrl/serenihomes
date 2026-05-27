@@ -7,6 +7,13 @@ import {
 
 import Link from "next/link"
 
+import {
+  ArrowRight,
+  Building2,
+  MapPin,
+  Star,
+} from "lucide-react"
+
 import { supabase }
 from "@/lib/supabase"
 
@@ -29,17 +36,15 @@ interface Property {
 
   category: string
 
-  featured?: boolean
+  bedrooms?: number
 
-  views?: number
+  bathrooms?: number
+
+  featured?: boolean
 }
 
-export default function HomePage() {
-
-  const [
-    latestProperties,
-    setLatestProperties,
-  ] = useState<Property[]>([])
+export default function
+HomePage() {
 
   const [
     featuredProperties,
@@ -47,91 +52,80 @@ export default function HomePage() {
   ] = useState<Property[]>([])
 
   const [
+    latestProperties,
+    setLatestProperties,
+  ] = useState<Property[]>([])
+
+  const [
     loading,
     setLoading,
   ] = useState(true)
 
-  // FETCH LATEST PROPERTIES
+  // FETCH DATA
 
   async function fetchProperties() {
 
-    const {
-      data,
-      error,
-    } = await supabase
+    try {
 
-      .from("properties")
+      setLoading(true)
 
-      .select("*")
+      // FEATURED
 
-      .order(
-        "created_at",
-        {
-          ascending: false,
-        }
+      const {
+        data: featuredData,
+      } = await supabase
+
+        .from("properties")
+
+        .select("*")
+
+        .eq(
+          "featured",
+          true
+        )
+
+        .limit(6)
+
+      // LATEST
+
+      const {
+        data: latestData,
+      } = await supabase
+
+        .from("properties")
+
+        .select("*")
+
+        .order(
+          "created_at",
+          {
+            ascending: false,
+          }
+        )
+
+        .limit(6)
+
+      setFeaturedProperties(
+        featuredData || []
       )
 
-      .limit(6)
+      setLatestProperties(
+        latestData || []
+      )
 
-    if (error) {
+    } catch (error) {
 
       console.error(error)
 
-      return
+    } finally {
+
+      setLoading(false)
     }
-
-    setLatestProperties(
-      data || []
-    )
-  }
-
-  // FETCH FEATURED PROPERTIES
-
-  async function fetchFeatured() {
-
-    const {
-      data,
-      error,
-    } = await supabase
-
-      .from("properties")
-
-      .select("*")
-
-      .eq(
-        "featured",
-        true
-      )
-
-      .limit(6)
-
-    if (error) {
-
-      console.error(error)
-
-      return
-    }
-
-    setFeaturedProperties(
-      data || []
-    )
   }
 
   useEffect(() => {
 
-    async function loadData() {
-
-      setLoading(true)
-
-      await Promise.all([
-        fetchProperties(),
-        fetchFeatured(),
-      ])
-
-      setLoading(false)
-    }
-
-    loadData()
+    fetchProperties()
 
   }, [])
 
@@ -144,7 +138,7 @@ export default function HomePage() {
       "
     >
 
-      {/* HERO SECTION */}
+      {/* HERO */}
 
       <section
         className="
@@ -161,7 +155,7 @@ export default function HomePage() {
             mx-auto
             grid
             lg:grid-cols-2
-            gap-14
+            gap-16
             items-center
           "
         >
@@ -172,7 +166,9 @@ export default function HomePage() {
 
             <div
               className="
-                inline-block
+                inline-flex
+                items-center
+                gap-2
                 bg-orange-100
                 text-orange-600
                 px-5
@@ -183,24 +179,35 @@ export default function HomePage() {
               "
             >
 
-              Kenya's Modern
-              Property Marketplace
+              <Star
+                size={18}
+              />
+
+              Trusted Housing Platform
 
             </div>
 
             <h1
               className="
                 text-6xl
-                font-extrabold
+                lg:text-7xl
+                font-black
                 leading-tight
-                text-gray-900
                 mb-8
               "
             >
 
-              Find Your Perfect
-              Home With
-              Sereni Homes
+              Find Your
+
+              <span
+                className="
+                  text-orange-500
+                "
+              >
+
+                {" "}Perfect Home
+
+              </span>
 
             </h1>
 
@@ -208,24 +215,27 @@ export default function HomePage() {
               className="
                 text-xl
                 text-gray-600
-                leading-9
+                leading-relaxed
                 mb-10
               "
             >
 
               Discover apartments,
-              villas, bedsitters,
-              and rental homes
+              bedsitters,
+              hostels,
+              and premium homes
               across Kenya with
-              trusted listings and
-              direct landlord contact.
+              SereniHomes.
 
             </p>
+
+            {/* BUTTONS */}
 
             <div
               className="
                 flex
-                flex-wrap
+                flex-col
+                sm:flex-row
                 gap-5
               "
             >
@@ -243,33 +253,46 @@ export default function HomePage() {
                   rounded-2xl
                   font-bold
                   text-lg
+                  flex
+                  items-center
+                  justify-center
+                  gap-3
                   transition
                 "
               >
 
                 Browse Properties
 
+                <ArrowRight
+                  size={22}
+                />
+
               </Link>
 
               <Link
 
-                href="/membership"
+                href="/dashboard/landlord"
 
                 className="
                   bg-white
                   hover:bg-gray-100
-                  text-gray-900
+                  text-gray-800
+                  border
+                  border-gray-200
                   px-8
                   py-5
                   rounded-2xl
                   font-bold
                   text-lg
-                  shadow-md
+                  flex
+                  items-center
+                  justify-center
+                  gap-3
                   transition
                 "
               >
 
-                Become a Member
+                List Your Property
 
               </Link>
 
@@ -285,60 +308,136 @@ export default function HomePage() {
             "
           >
 
-            <img
-
-              src="
-              https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=1200&auto=format&fit=crop
-              "
-
-              alt="
-              Modern Home
-              "
-
-              className="
-                rounded-[40px]
-                shadow-2xl
-                object-cover
-                h-[550px]
-                w-full
-              "
-            />
-
             <div
               className="
-                absolute
-                -bottom-8
-                -left-8
                 bg-white
+                rounded-[40px]
+                p-10
                 shadow-2xl
-                rounded-3xl
-                p-6
-                w-72
               "
             >
 
-              <h3
+              <div
                 className="
-                  text-2xl
-                  font-extrabold
-                  mb-2
+                  grid
+                  grid-cols-2
+                  gap-5
                 "
               >
 
-                1000+
+                <div
+                  className="
+                    bg-orange-100
+                    rounded-3xl
+                    p-8
+                  "
+                >
 
-              </h3>
+                  <Building2
+                    size={42}
+                    className="
+                      text-orange-500
+                      mb-5
+                    "
+                  />
 
-              <p
-                className="
-                  text-gray-600
-                "
-              >
+                  <h3
+                    className="
+                      text-4xl
+                      font-black
+                      mb-2
+                    "
+                  >
 
-                Verified properties
-                listed across Kenya
+                    500+
 
-              </p>
+                  </h3>
+
+                  <p
+                    className="
+                      text-gray-600
+                    "
+                  >
+
+                    Verified Listings
+
+                  </p>
+
+                </div>
+
+                <div
+                  className="
+                    bg-orange-500
+                    text-white
+                    rounded-3xl
+                    p-8
+                  "
+                >
+
+                  <MapPin
+                    size={42}
+                    className="
+                      mb-5
+                    "
+                  />
+
+                  <h3
+                    className="
+                      text-4xl
+                      font-black
+                      mb-2
+                    "
+                  >
+
+                    20+
+
+                  </h3>
+
+                  <p>
+
+                    Kenyan Cities
+
+                  </p>
+
+                </div>
+
+                <div
+                  className="
+                    col-span-2
+                    bg-gray-900
+                    text-white
+                    rounded-3xl
+                    p-8
+                  "
+                >
+
+                  <h3
+                    className="
+                      text-3xl
+                      font-black
+                      mb-3
+                    "
+                  >
+
+                    Safe & Secure
+
+                  </h3>
+
+                  <p
+                    className="
+                      text-gray-300
+                      text-lg
+                    "
+                  >
+
+                    Trusted platform for
+                    tenants and landlords.
+
+                  </p>
+
+                </div>
+
+              </div>
 
             </div>
 
@@ -367,9 +466,9 @@ export default function HomePage() {
           <div
             className="
               flex
-              items-center
               justify-between
-              mb-10
+              items-center
+              mb-12
             "
           >
 
@@ -377,7 +476,7 @@ export default function HomePage() {
 
               <h2
                 className="
-                  text-4xl
+                  text-5xl
                   font-extrabold
                   mb-3
                 "
@@ -394,24 +493,70 @@ export default function HomePage() {
                 "
               >
 
-                Premium hand-picked
-                homes
+                Premium homes selected
+                for you
 
               </p>
 
             </div>
 
+            <Link
+
+              href="/properties"
+
+              className="
+                hidden
+                md:flex
+                items-center
+                gap-2
+                text-orange-500
+                font-bold
+                text-lg
+              "
+            >
+
+              View All
+
+              <ArrowRight
+                size={20}
+              />
+
+            </Link>
+
           </div>
 
-          {featuredProperties.length === 0 ? (
+          {loading ? (
+
+            <div
+              className="
+                text-center
+                py-20
+              "
+            >
+
+              <h3
+                className="
+                  text-3xl
+                  font-bold
+                  text-orange-500
+                "
+              >
+
+                Loading...
+
+              </h3>
+
+            </div>
+
+          ) : featuredProperties.length === 0 ? (
 
             <div
               className="
                 bg-white
                 rounded-3xl
-                shadow-md
-                p-16
+                p-14
                 text-center
+                shadow-md
               "
             >
 
@@ -423,19 +568,18 @@ export default function HomePage() {
                 "
               >
 
-                No Featured Listings Yet
+                No featured properties
 
               </h3>
 
               <p
                 className="
-                  text-gray-600
-                  text-lg
+                  text-gray-500
                 "
               >
 
-                Featured properties
-                will appear here.
+                Featured listings will
+                appear here.
 
               </p>
 
@@ -447,7 +591,7 @@ export default function HomePage() {
               className="
                 grid
                 md:grid-cols-2
-                lg:grid-cols-3
+                xl:grid-cols-3
                 gap-8
               "
             >
@@ -455,67 +599,45 @@ export default function HomePage() {
               {featuredProperties.map(
                 (property) => (
 
-                  <div
-                    key={property.id}
+                  <PropertyCard
 
-                    className="
-                      relative
-                    "
-                  >
+                    key={
+                      property.id
+                    }
 
-                    {/* FEATURED BADGE */}
+                    id={
+                      property.id
+                    }
 
-                    <div
-                      className="
-                        absolute
-                        top-4
-                        left-4
-                        z-10
-                        bg-yellow-400
-                        text-black
-                        px-4
-                        py-2
-                        rounded-full
-                        font-bold
-                        shadow-lg
-                      "
-                    >
+                    title={
+                      property.title
+                    }
 
-                      ⭐ Featured
+                    description={
+                      property.description
+                    }
 
-                    </div>
+                    location={
+                      property.location
+                    }
 
-                    <PropertyCard
+                    price={
+                      property.price
+                    }
 
-                      id={property.id}
+                    image_url={
+                      property.image_url
+                    }
 
-                      title={
-                        property.title
-                      }
+                    category={
+                      property.category
+                    }
 
-                      description={
-                        property.description
-                      }
+                    featured={
+                      property.featured
+                    }
 
-                      location={
-                        property.location
-                      }
-
-                      price={
-                        property.price
-                      }
-
-                      image_url={
-                        property.image_url
-                      }
-
-                      category={
-                        property.category
-                      }
-
-                    />
-
-                  </div>
+                  />
                 )
               )}
 
@@ -545,9 +667,9 @@ export default function HomePage() {
           <div
             className="
               flex
-              items-center
               justify-between
-              mb-10
+              items-center
+              mb-12
             "
           >
 
@@ -555,13 +677,13 @@ export default function HomePage() {
 
               <h2
                 className="
-                  text-4xl
+                  text-5xl
                   font-extrabold
                   mb-3
                 "
               >
 
-                Latest Properties
+                Latest Listings
 
               </h2>
 
@@ -572,32 +694,12 @@ export default function HomePage() {
                 "
               >
 
-                Newly added homes
-                and rentals
+                Recently added homes
+                and apartments
 
               </p>
 
             </div>
-
-            <Link
-
-              href="/properties"
-
-              className="
-                bg-orange-500
-                hover:bg-orange-600
-                text-white
-                px-6
-                py-4
-                rounded-2xl
-                font-semibold
-                transition
-              "
-            >
-
-              View All
-
-            </Link>
 
           </div>
 
@@ -618,9 +720,47 @@ export default function HomePage() {
                 "
               >
 
-                Loading properties...
+                Loading...
 
               </h3>
+
+            </div>
+
+          ) : latestProperties.length === 0 ? (
+
+            <div
+              className="
+                bg-white
+                rounded-3xl
+                p-14
+                text-center
+                shadow-md
+              "
+            >
+
+              <h3
+                className="
+                  text-3xl
+                  font-bold
+                  mb-4
+                "
+              >
+
+                No properties found
+
+              </h3>
+
+              <p
+                className="
+                  text-gray-500
+                "
+              >
+
+                Listings will appear
+                here once landlords
+                upload them.
+
+              </p>
 
             </div>
 
@@ -630,7 +770,7 @@ export default function HomePage() {
               className="
                 grid
                 md:grid-cols-2
-                lg:grid-cols-3
+                xl:grid-cols-3
                 gap-8
               "
             >
@@ -640,9 +780,13 @@ export default function HomePage() {
 
                   <PropertyCard
 
-                    key={property.id}
+                    key={
+                      property.id
+                    }
 
-                    id={property.id}
+                    id={
+                      property.id
+                    }
 
                     title={
                       property.title
@@ -666,6 +810,10 @@ export default function HomePage() {
 
                     category={
                       property.category
+                    }
+
+                    featured={
+                      property.featured
                     }
 
                   />

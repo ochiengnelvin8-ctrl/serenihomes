@@ -1,13 +1,14 @@
 "use client"
 
 import Image from "next/image"
+
 import Link from "next/link"
 
 import {
   BedDouble,
   Bath,
   MapPin,
-  Heart,
+  Star,
 } from "lucide-react"
 
 interface PropertyCardProps {
@@ -29,9 +30,12 @@ interface PropertyCardProps {
   bedrooms?: number
 
   bathrooms?: number
+
+  featured?: boolean
 }
 
-export default function PropertyCard({
+export default function
+PropertyCard({
 
   id,
 
@@ -51,6 +55,7 @@ export default function PropertyCard({
 
   bathrooms,
 
+  featured,
 }: PropertyCardProps) {
 
   return (
@@ -68,27 +73,25 @@ export default function PropertyCard({
           hover:shadow-2xl
           transition
           duration-300
-          hover:-translate-y-2
           group
         "
       >
 
-        {/* IMAGE SECTION */}
+        {/* IMAGE */}
 
         <div
           className="
             relative
             h-72
-            w-full
             overflow-hidden
           "
         >
 
           <Image
+
             src={
               image_url ||
-
-              "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?q=80&w=1200&auto=format&fit=crop"
+              "/placeholder.jpg"
             }
 
             alt={title}
@@ -103,49 +106,55 @@ export default function PropertyCard({
             "
           />
 
+          {/* FEATURED BADGE */}
+
+          {featured && (
+
+            <div
+              className="
+                absolute
+                top-4
+                left-4
+                bg-orange-500
+                text-white
+                px-4
+                py-2
+                rounded-full
+                text-sm
+                font-bold
+                shadow-lg
+                z-10
+                flex
+                items-center
+                gap-2
+              "
+            >
+
+              <Star size={16} />
+
+              Featured
+
+            </div>
+          )}
+
           {/* CATEGORY */}
 
           <div
             className="
               absolute
-              top-4
+              bottom-4
               left-4
-              bg-orange-500
-              text-white
+              bg-white/90
+              backdrop-blur-md
               px-4
               py-2
               rounded-full
               text-sm
               font-semibold
-              shadow-md
             "
           >
 
             {category}
-
-          </div>
-
-          {/* HEART ICON */}
-
-          <div
-            className="
-              absolute
-              top-4
-              right-4
-              bg-white/90
-              backdrop-blur-sm
-              p-3
-              rounded-full
-              shadow-md
-            "
-          >
-
-            <Heart
-              size={20}
-              className="
-                text-orange-500
-              "
-            />
 
           </div>
 
@@ -165,7 +174,6 @@ export default function PropertyCard({
             className="
               text-2xl
               font-bold
-              text-gray-800
               mb-3
               line-clamp-1
             "
@@ -187,9 +195,7 @@ export default function PropertyCard({
             "
           >
 
-            <MapPin
-              size={18}
-            />
+            <MapPin size={18} />
 
             <span>
 
@@ -204,9 +210,8 @@ export default function PropertyCard({
           <p
             className="
               text-gray-600
-              leading-7
+              line-clamp-2
               mb-6
-              line-clamp-3
             "
           >
 
@@ -214,7 +219,7 @@ export default function PropertyCard({
 
           </p>
 
-          {/* FEATURES */}
+          {/* DETAILS */}
 
           <div
             className="
@@ -225,116 +230,92 @@ export default function PropertyCard({
             "
           >
 
-            {/* BEDROOMS */}
+            {bedrooms && (
 
-            <div
-              className="
-                flex
-                items-center
-                gap-2
-                text-gray-600
-              "
-            >
-
-              <BedDouble
-                size={20}
+              <div
                 className="
-                  text-orange-500
-                "
-              />
-
-              <span
-                className="
-                  font-medium
+                  flex
+                  items-center
+                  gap-2
+                  text-gray-600
                 "
               >
 
-                {bedrooms || 0}
-                {" "}
-                Beds
+                <BedDouble
+                  size={18}
+                />
 
-              </span>
+                <span>
 
-            </div>
+                  {bedrooms} Beds
 
-            {/* BATHROOMS */}
+                </span>
 
-            <div
-              className="
-                flex
-                items-center
-                gap-2
-                text-gray-600
-              "
-            >
+              </div>
+            )}
 
-              <Bath
-                size={20}
+            {bathrooms && (
+
+              <div
                 className="
-                  text-orange-500
-                "
-              />
-
-              <span
-                className="
-                  font-medium
+                  flex
+                  items-center
+                  gap-2
+                  text-gray-600
                 "
               >
 
-                {bathrooms || 0}
-                {" "}
-                Baths
+                <Bath size={18} />
 
-              </span>
+                <span>
 
-            </div>
+                  {bathrooms} Baths
+
+                </span>
+
+              </div>
+            )}
 
           </div>
 
-          {/* FOOTER */}
+          {/* PRICE */}
 
           <div
             className="
               flex
-              items-center
               justify-between
-              border-t
-              pt-5
+              items-center
             "
           >
 
-            {/* PRICE */}
-
             <div>
 
-              <p
-                className="
-                  text-sm
-                  text-gray-500
-                "
-              >
-
-                Starting From
-
-              </p>
-
-              <h3
+              <span
                 className="
                   text-3xl
-                  font-extrabold
+                  font-black
                   text-orange-500
                 "
               >
 
                 Ksh {price}
 
-              </h3>
+              </span>
+
+              <span
+                className="
+                  text-gray-500
+                  ml-1
+                "
+              >
+
+                / month
+
+              </span>
 
             </div>
 
-            {/* BUTTON */}
-
-            <div
+            <button
               className="
                 bg-orange-500
                 hover:bg-orange-600
@@ -347,9 +328,9 @@ export default function PropertyCard({
               "
             >
 
-              View Details
+              View
 
-            </div>
+            </button>
 
           </div>
 
