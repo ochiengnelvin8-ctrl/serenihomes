@@ -8,10 +8,13 @@ import {
 import Link from "next/link"
 
 import {
+  ArrowLeft,
   MapPin,
   BedDouble,
   Bath,
-  ArrowLeft,
+  Eye,
+  Phone,
+  Star,
 } from "lucide-react"
 
 import { useParams }
@@ -20,14 +23,14 @@ from "next/navigation"
 import { supabase }
 from "@/lib/supabase"
 
+import FavoriteButton
+from "@/components/FavoriteButton"
+
 import ReviewForm
 from "@/components/ReviewForm"
 
 import ReviewsList
 from "@/components/ReviewsList"
-
-import FavoriteButton
-from "@/components/FavoriteButton"
 
 import PropertyGallery
 from "@/components/PropertyGallery"
@@ -51,13 +54,15 @@ interface Property {
 
   category: string
 
-  landlord_phone?: string
+  featured?: boolean
 
   bedrooms?: number
 
   bathrooms?: number
 
   views?: number
+
+  landlord_phone?: string
 
   created_at?: string
 }
@@ -78,7 +83,8 @@ interface Review {
   }
 }
 
-export default function PropertyDetailsPage() {
+export default function
+PropertyDetailsPage() {
 
   const params =
     useParams()
@@ -94,11 +100,6 @@ export default function PropertyDetailsPage() {
   )
 
   const [
-    loading,
-    setLoading,
-  ] = useState(true)
-
-  const [
     reviews,
     setReviews,
   ] = useState<Review[]>([])
@@ -108,68 +109,25 @@ export default function PropertyDetailsPage() {
     setGalleryImages,
   ] = useState<string[]>([])
 
-  // INCREMENT VIEWS
-
-  async function incrementViews() {
-
-    const {
-      data,
-      error,
-    } = await supabase
-
-      .from("properties")
-
-      .select("views")
-
-      .eq("id", id)
-
-      .single()
-
-    if (error || !data) {
-
-      console.error(error)
-
-      return
-    }
-
-    const currentViews =
-
-      data.views || 0
-
-    const {
-      error: updateError,
-    } = await supabase
-
-      .from("properties")
-
-      .update({
-        views:
-          currentViews + 1,
-      })
-
-      .eq("id", id)
-
-    if (updateError) {
-
-      console.error(
-        updateError
-      )
-    }
-  }
+  const [
+    loading,
+    setLoading,
+  ] = useState(true)
 
   // FETCH PROPERTY
 
   async function fetchProperty() {
 
-    setLoading(true)
+    try {
 
-    // PROPERTY
+      setLoading(true)
 
-    const {
-      data,
-      error,
-    } =
-      await supabase
+      // PROPERTY
+
+      const {
+        data,
+        error,
+      } = await supabase
 
         .from("properties")
 
@@ -179,23 +137,20 @@ export default function PropertyDetailsPage() {
 
         .single()
 
-    if (error) {
+      if (error) {
 
-      console.error(error)
+        console.error(error)
 
-      setLoading(false)
+        return
+      }
 
-      return
-    }
+      setProperty(data)
 
-    setProperty(data)
+      // REVIEWS
 
-    // REVIEWS
-
-    const {
-      data: reviewsData,
-    } =
-      await supabase
+      const {
+        data: reviewsData,
+      } = await supabase
 
         .from("reviews")
 
@@ -213,22 +168,20 @@ export default function PropertyDetailsPage() {
 
         .order(
           "created_at",
-
           {
             ascending: false,
           }
         )
 
-    setReviews(
-      reviewsData || []
-    )
+      setReviews(
+        reviewsData || []
+      )
 
-    // GALLERY
+      // GALLERY IMAGES
 
-    const {
-      data: galleryData,
-    } =
-      await supabase
+      const {
+        data: galleryData,
+      } = await supabase
 
         .from(
           "property_images"
@@ -241,28 +194,69 @@ export default function PropertyDetailsPage() {
           id
         )
 
-    if (galleryData) {
+      if (galleryData) {
 
-      setGalleryImages(
+        setGalleryImages(
 
-        galleryData.map(
-          (item) =>
-
-            item.image_url
+          galleryData.map(
+            (item) =>
+              item.image_url
+          )
         )
-      )
-    }
+      }
 
-    setLoading(false)
+    } catch (error) {
+
+      console.error(error)
+
+    } finally {
+
+      setLoading(false)
+    }
+  }
+
+  // INCREMENT VIEWS
+
+  async function incrementViews() {
+
+    const {
+      data,
+    } = await supabase
+
+      .from("properties")
+
+      .select("views")
+
+      .eq("id", id)
+
+      .single()
+
+    if (!data)
+      return
+
+    const currentViews =
+
+      data.views || 0
+
+    await supabase
+
+      .from("properties")
+
+      .update({
+        views:
+          currentViews + 1,
+      })
+
+      .eq("id", id)
   }
 
   useEffect(() => {
 
     if (id) {
 
-      incrementViews()
-
       fetchProperty()
+
+      incrementViews()
     }
 
   }, [id])
@@ -321,7 +315,7 @@ export default function PropertyDetailsPage() {
           className="
             text-5xl
             font-extrabold
-            mb-4
+            mb-5
           "
         >
 
@@ -330,17 +324,17 @@ export default function PropertyDetailsPage() {
         </h1>
 
         <Link
+
           href="/properties"
 
           className="
-            mt-5
             bg-orange-500
             hover:bg-orange-600
             text-white
-            px-6
+            px-7
             py-4
             rounded-2xl
-            font-semibold
+            font-bold
             transition
           "
         >
@@ -374,26 +368,29 @@ export default function PropertyDetailsPage() {
         {/* BACK BUTTON */}
 
         <Link
+
           href="/properties"
 
           className="
             inline-flex
             items-center
             gap-3
-            mb-8
             text-orange-500
             hover:text-orange-600
             font-semibold
+            mb-8
           "
         >
 
-          <ArrowLeft size={22} />
+          <ArrowLeft
+            size={22}
+          />
 
           Back to Properties
 
         </Link>
 
-        {/* TITLE */}
+        {/* HEADER */}
 
         <div
           className="
@@ -402,24 +399,62 @@ export default function PropertyDetailsPage() {
             lg:flex-row
             lg:items-center
             lg:justify-between
-            gap-5
+            gap-6
             mb-8
           "
         >
 
           <div>
 
-            <h1
+            <div
               className="
-                text-5xl
-                font-extrabold
+                flex
+                flex-wrap
+                items-center
+                gap-4
                 mb-4
               "
             >
 
-              {property.title}
+              <h1
+                className="
+                  text-5xl
+                  font-extrabold
+                "
+              >
 
-            </h1>
+                {
+                  property.title
+                }
+
+              </h1>
+
+              {property.featured && (
+
+                <div
+                  className="
+                    bg-yellow-400
+                    text-black
+                    px-4
+                    py-2
+                    rounded-full
+                    font-bold
+                    flex
+                    items-center
+                    gap-2
+                  "
+                >
+
+                  <Star
+                    size={18}
+                  />
+
+                  Featured
+
+                </div>
+              )}
+
+            </div>
 
             <div
               className="
@@ -431,9 +466,13 @@ export default function PropertyDetailsPage() {
               "
             >
 
-              <MapPin size={22} />
+              <MapPin
+                size={22}
+              />
 
-              {property.location}
+              {
+                property.location
+              }
 
             </div>
 
@@ -443,7 +482,7 @@ export default function PropertyDetailsPage() {
             className="
               flex
               items-center
-              gap-4
+              gap-5
             "
           >
 
@@ -461,7 +500,9 @@ export default function PropertyDetailsPage() {
               "
             >
 
-              Ksh {property.price}
+              Ksh {
+                property.price
+              }
 
             </div>
 
@@ -483,7 +524,7 @@ export default function PropertyDetailsPage() {
 
         />
 
-        {/* DETAILS */}
+        {/* CONTENT */}
 
         <div
           className="
@@ -502,7 +543,7 @@ export default function PropertyDetailsPage() {
             "
           >
 
-            {/* PROPERTY INFO */}
+            {/* PROPERTY DETAILS */}
 
             <div
               className="
@@ -514,11 +555,13 @@ export default function PropertyDetailsPage() {
               "
             >
 
+              {/* PROPERTY STATS */}
+
               <div
                 className="
                   flex
                   flex-wrap
-                  gap-5
+                  gap-4
                   mb-8
                 "
               >
@@ -534,7 +577,9 @@ export default function PropertyDetailsPage() {
                   "
                 >
 
-                  {property.category}
+                  {
+                    property.category
+                  }
 
                 </div>
 
@@ -572,7 +617,9 @@ export default function PropertyDetailsPage() {
                   "
                 >
 
-                  <Bath size={20} />
+                  <Bath
+                    size={20}
+                  />
 
                   {
                     property.bathrooms || 0
@@ -580,10 +627,11 @@ export default function PropertyDetailsPage() {
 
                 </div>
 
-                {/* VIEWS */}
-
                 <div
                   className="
+                    flex
+                    items-center
+                    gap-2
                     bg-blue-100
                     text-blue-600
                     px-5
@@ -593,13 +641,19 @@ export default function PropertyDetailsPage() {
                   "
                 >
 
-                  👁 {
+                  <Eye
+                    size={20}
+                  />
+
+                  {
                     property.views || 0
                   } Views
 
                 </div>
 
               </div>
+
+              {/* DESCRIPTION */}
 
               <h2
                 className="
@@ -685,6 +739,7 @@ export default function PropertyDetailsPage() {
               </h2>
 
               <ReviewForm
+
                 propertyId={
                   property.id
                 }
@@ -692,6 +747,7 @@ export default function PropertyDetailsPage() {
                 onReviewAdded={
                   fetchProperty
                 }
+
               />
 
               <div
@@ -712,7 +768,7 @@ export default function PropertyDetailsPage() {
 
           </div>
 
-          {/* RIGHT SIDEBAR */}
+          {/* SIDEBAR */}
 
           <div>
 
@@ -747,79 +803,80 @@ export default function PropertyDetailsPage() {
                 "
               >
 
-                Contact the landlord to
-                schedule a viewing or
-                ask questions about this
-                property.
+                Contact the landlord
+                directly to schedule a
+                viewing or ask
+                questions.
 
               </p>
 
-              <div
+              {/* CALL BUTTON */}
+
+              <a
+
+                href={`tel:${property.landlord_phone}`}
+
                 className="
+                  w-full
                   flex
-                  flex-col
-                  gap-4
+                  items-center
+                  justify-center
+                  gap-3
+                  bg-orange-500
+                  hover:bg-orange-600
+                  text-white
+                  py-4
+                  rounded-2xl
+                  font-bold
+                  text-lg
+                  transition
+                  mb-5
                 "
               >
 
-                {/* CALL */}
+                <Phone
+                  size={22}
+                />
 
-                <a
+                Call Landlord
 
-                  href={`tel:${property.landlord_phone}`}
+              </a>
 
-                  className="
-                    w-full
-                    bg-orange-500
-                    hover:bg-orange-600
-                    text-white
-                    py-4
-                    rounded-2xl
-                    font-bold
-                    text-lg
-                    transition
-                    text-center
-                  "
-                >
+              {/* WHATSAPP */}
 
-                  Call Landlord
+              <a
 
-                </a>
+                href={`https://wa.me/${property.landlord_phone?.replace(
+                  /\+/g,
+                  ""
+                )}?text=${encodeURIComponent(
+                  `Hello, I am interested in ${property.title}`
+                )}`}
 
-                {/* WHATSAPP */}
+                target="_blank"
 
-                <a
+                rel="noopener noreferrer"
 
-                  href={`https://wa.me/${property.landlord_phone?.replace(
-                    /\+/g,
-                    ""
-                  )}?text=${encodeURIComponent(
-                    `Hello, I am interested in ${property.title}`
-                  )}`}
+                className="
+                  w-full
+                  flex
+                  items-center
+                  justify-center
+                  gap-3
+                  bg-green-500
+                  hover:bg-green-600
+                  text-white
+                  py-4
+                  rounded-2xl
+                  font-bold
+                  text-lg
+                  transition
+                "
+              >
 
-                  target="_blank"
+                WhatsApp Landlord
 
-                  rel="noopener noreferrer"
-
-                  className="
-                    w-full
-                    bg-green-500
-                    hover:bg-green-600
-                    text-white
-                    py-4
-                    rounded-2xl
-                    font-bold
-                    text-lg
-                    transition
-                    text-center
-                  "
-                >
-
-                  WhatsApp Landlord
-
-                </a>
-
-              </div>
+              </a>
 
             </div>
 

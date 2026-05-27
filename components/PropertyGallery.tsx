@@ -1,18 +1,13 @@
-"use client"
-
-import Image from "next/image"
-
-import { useState }
-from "react"
-
 interface Props {
 
   mainImage: string
 
-  galleryImages: string[]
+  galleryImages:
+    string[]
 }
 
-export default function PropertyGallery({
+export default function
+PropertyGallery({
 
   mainImage,
 
@@ -20,14 +15,7 @@ export default function PropertyGallery({
 
 }: Props) {
 
-  const [
-    selectedImage,
-    setSelectedImage,
-  ] = useState(
-    mainImage
-  )
-
-  const allImages = [
+  const images = [
 
     mainImage,
 
@@ -36,98 +24,37 @@ export default function PropertyGallery({
 
   return (
 
-    <div>
+    <div
+      className="
+        grid
+        md:grid-cols-2
+        gap-4
+      "
+    >
 
-      {/* MAIN IMAGE */}
+      {images.map(
+        (image, index) => (
 
-      <div
-        className="
-          relative
-          w-full
-          h-[500px]
-          rounded-3xl
-          overflow-hidden
-          mb-5
-        "
-      >
+          <img
 
-        <Image
-          src={selectedImage}
+            key={index}
 
-          alt="Property"
+            src={image}
 
-          fill
+            alt="
+            Property
+            "
 
-          priority
+            className="
+              w-full
+              h-[350px]
+              object-cover
+              rounded-3xl
+            "
+          />
 
-          className="
-            object-cover
-          "
-        />
-
-      </div>
-
-      {/* THUMBNAILS */}
-
-      <div
-        className="
-          grid
-          grid-cols-2
-          md:grid-cols-5
-          gap-4
-        "
-      >
-
-        {allImages.map(
-          (
-            image,
-            index
-          ) => (
-
-            <button
-              key={index}
-
-              onClick={() =>
-                setSelectedImage(
-                  image
-                )
-              }
-
-              className={`
-                relative
-                h-28
-                rounded-2xl
-                overflow-hidden
-                border-4
-                transition
-
-                ${
-                  selectedImage === image
-
-                    ? "border-orange-500"
-
-                    : "border-transparent"
-                }
-              `}
-            >
-
-              <Image
-                src={image}
-
-                alt="Gallery"
-
-                fill
-
-                className="
-                  object-cover
-                "
-              />
-
-            </button>
-          )
-        )}
-
-      </div>
+        )
+      )}
 
     </div>
   )

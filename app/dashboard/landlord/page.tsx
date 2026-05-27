@@ -5,393 +5,286 @@ import {
   useState,
 } from "react"
 
-import { useRouter }
-from "next/navigation"
+import Link from "next/link"
+
+import {
+  Plus,
+  Trash2,
+  Pencil,
+  Eye,
+  MapPin,
+  BedDouble,
+  Bath,
+  Star,
+} from "lucide-react"
 
 import { supabase }
 from "@/lib/supabase"
 
-export default function LandlordDashboardPage() {
+import PropertyImageUploader
+from "@/components/PropertyImageUploader"
 
-  const router =
-    useRouter()
+interface Property {
 
-  // PROPERTY STATES
+  id: string
 
-  const [
-    title,
-    setTitle,
-  ] = useState("")
+  title: string
 
-  const [
-    description,
-    setDescription,
-  ] = useState("")
+  description: string
 
-  const [
-    location,
-    setLocation,
-  ] = useState("")
+  location: string
 
-  const [
-    price,
-    setPrice,
-  ] = useState("")
+  price: string
 
-  const [
-    category,
-    setCategory,
-  ] = useState("Apartment")
+  image_url: string
 
-  const [
-    bedrooms,
-    setBedrooms,
-  ] = useState("1")
+  category: string
+
+  featured?: boolean
+
+  bedrooms?: number
+
+  bathrooms?: number
+
+  views?: number
+
+  created_at?: string
+}
+
+export default function
+LandlordDashboardPage() {
 
   const [
-    bathrooms,
-    setBathrooms,
-  ] = useState("1")
-
-  const [
-    landlordPhone,
-    setLandlordPhone,
-  ] = useState("")
-
-  // IMAGE STATES
-
-  const [
-    image,
-    setImage,
-  ] = useState<File | null>(
-    null
-  )
-
-  const [
-    galleryImages,
-    setGalleryImages,
-  ] = useState<File[]>([])
-
-  // UI STATES
+    properties,
+    setProperties,
+  ] = useState<Property[]>([])
 
   const [
     loading,
     setLoading,
-  ] = useState(false)
+  ] = useState(true)
 
   const [
-    user,
-    setUser,
-  ] = useState<any>(null)
+    userId,
+    setUserId,
+  ] = useState<string>("")
 
-  // CHECK AUTH
+  // FETCH USER + PROPERTIES
 
-  useEffect(() => {
-
-    async function getUser() {
-
-      const {
-        data: {
-          user,
-        },
-      } =
-        await supabase
-          .auth
-          .getUser()
-
-      if (!user) {
-
-        router.push("/login")
-
-        return
-      }
-
-      setUser(user)
-    }
-
-    getUser()
-
-  }, [router])
-
-  // HANDLE MAIN IMAGE
-
-  function handleImageChange(
-    e: React.ChangeEvent<HTMLInputElement>
-  ) {
-
-    if (
-      e.target.files &&
-      e.target.files[0]
-    ) {
-
-      setImage(
-        e.target.files[0]
-      )
-    }
-  }
-
-  // HANDLE GALLERY IMAGES
-
-  function handleGalleryImages(
-    e: React.ChangeEvent<HTMLInputElement>
-  ) {
-
-    if (e.target.files) {
-
-      setGalleryImages(
-        Array.from(
-          e.target.files
-        )
-      )
-    }
-  }
-
-  // CREATE PROPERTY
-
-  async function createProperty() {
-
-    if (!image) {
-
-      alert(
-        "Please upload a main image."
-      )
-
-      return
-    }
-
-    setLoading(true)
+  async function fetchProperties() {
 
     try {
 
-      // MAIN IMAGE NAME
+      setLoading(true)
 
-      const imageName =
-
-        `${Date.now()}-${image.name}`
-
-      // UPLOAD MAIN IMAGE
+      // CURRENT USER
 
       const {
-        error: uploadError,
+        data: authData,
       } =
-        await supabase
+        await supabase.auth.getUser()
 
-          .storage
+      const currentUser =
 
-          .from(
-            "property-images"
-          )
+        authData.user
 
-          .upload(
-            imageName,
-            image
-          )
-
-      if (uploadError) {
-
-        console.error(
-          uploadError
-        )
-
-        alert(
-          "Failed to upload image."
-        )
+      if (!currentUser) {
 
         setLoading(false)
 
         return
       }
 
-      // GET MAIN IMAGE URL
-
-      const {
-        data: imageData,
-      } =
-        supabase
-
-          .storage
-
-          .from(
-            "property-images"
-          )
-
-          .getPublicUrl(
-            imageName
-          )
-
-      const imageUrl =
-
-        imageData.publicUrl
-
-      // INSERT PROPERTY
-
-      const {
-        data: propertyData,
-        error: propertyError,
-      } =
-        await supabase
-
-          .from("properties")
-
-          .insert([
-            {
-              title,
-              description,
-              location,
-              price,
-              category,
-
-              bedrooms:
-                Number(
-                  bedrooms
-                ),
-
-              bathrooms:
-                Number(
-                  bathrooms
-                ),
-
-              landlord_phone:
-                landlordPhone,
-
-              image_url:
-                imageUrl,
-
-              user_id:
-                user.id,
-            },
-          ])
-
-          .select()
-
-          .single()
-
-      if (
-        propertyError ||
-        !propertyData
-      ) {
-
-        console.error(
-          propertyError
-        )
-
-        alert(
-          "Failed to create property."
-        )
-
-        setLoading(false)
-
-        return
-      }
-
-      // UPLOAD GALLERY IMAGES
-
-      for (
-        const galleryImage
-        of galleryImages
-      ) {
-
-        const galleryName =
-
-          `${Date.now()}-${galleryImage.name}`
-
-        const {
-          error:
-            galleryUploadError,
-        } =
-          await supabase
-
-            .storage
-
-            .from(
-              "property-images"
-            )
-
-            .upload(
-              galleryName,
-              galleryImage
-            )
-
-        if (
-          galleryUploadError
-        ) {
-
-          console.error(
-            galleryUploadError
-          )
-
-          continue
-        }
-
-        const {
-          data:
-            galleryUrlData,
-        } =
-          supabase
-
-            .storage
-
-            .from(
-              "property-images"
-            )
-
-            .getPublicUrl(
-              galleryName
-            )
-
-        // SAVE GALLERY IMAGE
-
-        await supabase
-
-          .from(
-            "property_images"
-          )
-
-          .insert([
-            {
-              property_id:
-                propertyData.id,
-
-              image_url:
-                galleryUrlData
-                  .publicUrl,
-            },
-          ])
-      }
-
-      alert(
-        "Property created successfully!"
+      setUserId(
+        currentUser.id
       )
 
-      // RESET FORM
+      // FETCH LANDLORD PROPERTIES
 
-      setTitle("")
-      setDescription("")
-      setLocation("")
-      setPrice("")
-      setCategory("Apartment")
-      setBedrooms("1")
-      setBathrooms("1")
-      setLandlordPhone("")
-      setImage(null)
-      setGalleryImages([])
+      const {
+        data,
+        error,
+      } = await supabase
 
-      router.push(
-        "/properties"
+        .from("properties")
+
+        .select("*")
+
+        .eq(
+          "user_id",
+          currentUser.id
+        )
+
+        .order(
+          "created_at",
+          {
+            ascending: false,
+          }
+        )
+
+      if (error) {
+
+        console.error(error)
+
+        return
+      }
+
+      setProperties(
+        data || []
       )
 
     } catch (error) {
 
       console.error(error)
 
-      alert(
-        "Something went wrong."
-      )
-
     } finally {
 
       setLoading(false)
     }
+  }
+
+  // DELETE PROPERTY
+
+  async function deleteProperty(
+    propertyId: string
+  ) {
+
+    const confirmed =
+
+      confirm(
+        "Are you sure you want to delete this property?"
+      )
+
+    if (!confirmed)
+      return
+
+    try {
+
+      const {
+        error,
+      } = await supabase
+
+        .from("properties")
+
+        .delete()
+
+        .eq(
+          "id",
+          propertyId
+        )
+
+      if (error) {
+
+        console.error(error)
+
+        alert(
+          "Failed to delete property"
+        )
+
+        return
+      }
+
+      setProperties(
+        (
+          prev
+        ) =>
+          prev.filter(
+            (property) =>
+              property.id !==
+              propertyId
+          )
+      )
+
+      alert(
+        "Property deleted successfully"
+      )
+
+    } catch (error) {
+
+      console.error(error)
+    }
+  }
+
+  // TOGGLE FEATURED
+
+  async function toggleFeatured(
+    propertyId: string,
+    currentValue: boolean
+  ) {
+
+    try {
+
+      const {
+        error,
+      } = await supabase
+
+        .from("properties")
+
+        .update({
+          featured:
+            !currentValue,
+        })
+
+        .eq(
+          "id",
+          propertyId
+        )
+
+      if (error) {
+
+        console.error(error)
+
+        alert(
+          "Failed to update featured status"
+        )
+
+        return
+      }
+
+      fetchProperties()
+
+    } catch (error) {
+
+      console.error(error)
+    }
+  }
+
+  useEffect(() => {
+
+    fetchProperties()
+
+  }, [])
+
+  // LOADING
+
+  if (loading) {
+
+    return (
+
+      <main
+        className="
+          min-h-screen
+          flex
+          items-center
+          justify-center
+          bg-orange-50
+        "
+      >
+
+        <h1
+          className="
+            text-3xl
+            font-bold
+            text-orange-500
+          "
+        >
+
+          Loading dashboard...
+
+        </h1>
+
+      </main>
+    )
   }
 
   return (
@@ -407,501 +300,573 @@ export default function LandlordDashboardPage() {
 
       <div
         className="
-          max-w-4xl
+          max-w-7xl
           mx-auto
-          bg-white
-          rounded-3xl
-          shadow-lg
-          p-10
         "
       >
 
-        <h1
+        {/* HEADER */}
+
+        <div
           className="
-            text-5xl
-            font-extrabold
-            text-orange-500
+            flex
+            flex-col
+            md:flex-row
+            md:items-center
+            md:justify-between
+            gap-5
             mb-10
           "
         >
 
-          Add New Property
-
-        </h1>
-
-        <div
-          className="
-            grid
-            gap-6
-          "
-        >
-
-          {/* TITLE */}
-
           <div>
 
-            <label
+            <h1
               className="
-                block
-                font-semibold
-                mb-2
+                text-5xl
+                font-extrabold
+                mb-4
               "
             >
 
-              Property Title
+              Landlord Dashboard
 
-            </label>
+            </h1>
 
-            <input
-              type="text"
-
-              placeholder="
-              Modern Apartment
-              "
-
-              value={title}
-
-              onChange={(e) =>
-                setTitle(
-                  e.target.value
-                )
-              }
-
+            <p
               className="
-                w-full
-                border
-                rounded-2xl
-                p-4
-                outline-none
-                focus:ring-2
-                focus:ring-orange-500
+                text-lg
+                text-gray-600
               "
-            />
+            >
+
+              Manage your property
+              listings and uploads.
+
+            </p>
 
           </div>
 
-          {/* DESCRIPTION */}
+          <Link
 
-          <div>
-
-            <label
-              className="
-                block
-                font-semibold
-                mb-2
-              "
-            >
-
-              Description
-
-            </label>
-
-            <textarea
-
-              placeholder="
-              Describe the property...
-              "
-
-              value={
-                description
-              }
-
-              onChange={(e) =>
-                setDescription(
-                  e.target.value
-                )
-              }
-
-              className="
-                w-full
-                border
-                rounded-2xl
-                p-4
-                min-h-[160px]
-                outline-none
-                focus:ring-2
-                focus:ring-orange-500
-              "
-            />
-
-          </div>
-
-          {/* LOCATION */}
-
-          <div>
-
-            <label
-              className="
-                block
-                font-semibold
-                mb-2
-              "
-            >
-
-              Location
-
-            </label>
-
-            <input
-              type="text"
-
-              placeholder="
-              Nairobi, Kenya
-              "
-
-              value={location}
-
-              onChange={(e) =>
-                setLocation(
-                  e.target.value
-                )
-              }
-
-              className="
-                w-full
-                border
-                rounded-2xl
-                p-4
-                outline-none
-                focus:ring-2
-                focus:ring-orange-500
-              "
-            />
-
-          </div>
-
-          {/* PRICE */}
-
-          <div>
-
-            <label
-              className="
-                block
-                font-semibold
-                mb-2
-              "
-            >
-
-              Price (Ksh)
-
-            </label>
-
-            <input
-              type="number"
-
-              placeholder="
-              25000
-              "
-
-              value={price}
-
-              onChange={(e) =>
-                setPrice(
-                  e.target.value
-                )
-              }
-
-              className="
-                w-full
-                border
-                rounded-2xl
-                p-4
-                outline-none
-                focus:ring-2
-                focus:ring-orange-500
-              "
-            />
-
-          </div>
-
-          {/* CATEGORY */}
-
-          <div>
-
-            <label
-              className="
-                block
-                font-semibold
-                mb-2
-              "
-            >
-
-              Category
-
-            </label>
-
-            <select
-
-              value={category}
-
-              onChange={(e) =>
-                setCategory(
-                  e.target.value
-                )
-              }
-
-              className="
-                w-full
-                border
-                rounded-2xl
-                p-4
-                outline-none
-                focus:ring-2
-                focus:ring-orange-500
-              "
-            >
-
-              <option>
-                Apartment
-              </option>
-
-              <option>
-                Bedsitter
-              </option>
-
-              <option>
-                Maisonette
-              </option>
-
-              <option>
-                Villa
-              </option>
-
-            </select>
-
-          </div>
-
-          {/* BEDROOMS */}
-
-          <div>
-
-            <label
-              className="
-                block
-                font-semibold
-                mb-2
-              "
-            >
-
-              Bedrooms
-
-            </label>
-
-            <input
-              type="number"
-
-              value={bedrooms}
-
-              onChange={(e) =>
-                setBedrooms(
-                  e.target.value
-                )
-              }
-
-              className="
-                w-full
-                border
-                rounded-2xl
-                p-4
-                outline-none
-                focus:ring-2
-                focus:ring-orange-500
-              "
-            />
-
-          </div>
-
-          {/* BATHROOMS */}
-
-          <div>
-
-            <label
-              className="
-                block
-                font-semibold
-                mb-2
-              "
-            >
-
-              Bathrooms
-
-            </label>
-
-            <input
-              type="number"
-
-              value={bathrooms}
-
-              onChange={(e) =>
-                setBathrooms(
-                  e.target.value
-                )
-              }
-
-              className="
-                w-full
-                border
-                rounded-2xl
-                p-4
-                outline-none
-                focus:ring-2
-                focus:ring-orange-500
-              "
-            />
-
-          </div>
-
-          {/* LANDLORD PHONE */}
-
-          <div>
-
-            <label
-              className="
-                block
-                font-semibold
-                mb-2
-              "
-            >
-
-              Landlord Phone
-
-            </label>
-
-            <input
-              type="text"
-
-              placeholder="
-              +254712345678
-              "
-
-              value={
-                landlordPhone
-              }
-
-              onChange={(e) =>
-                setLandlordPhone(
-                  e.target.value
-                )
-              }
-
-              className="
-                w-full
-                border
-                rounded-2xl
-                p-4
-                outline-none
-                focus:ring-2
-                focus:ring-orange-500
-              "
-            />
-
-          </div>
-
-          {/* MAIN IMAGE */}
-
-          <div>
-
-            <label
-              className="
-                block
-                font-semibold
-                mb-2
-              "
-            >
-
-              Main Property Image
-
-            </label>
-
-            <input
-              type="file"
-
-              accept="image/*"
-
-              onChange={
-                handleImageChange
-              }
-
-              className="
-                w-full
-                border
-                rounded-2xl
-                p-4
-              "
-            />
-
-          </div>
-
-          {/* GALLERY IMAGES */}
-
-          <div>
-
-            <label
-              className="
-                block
-                font-semibold
-                mb-2
-              "
-            >
-
-              Gallery Images
-
-            </label>
-
-            <input
-              type="file"
-
-              multiple
-
-              accept="image/*"
-
-              onChange={
-                handleGalleryImages
-              }
-
-              className="
-                w-full
-                border
-                rounded-2xl
-                p-4
-              "
-            />
-
-          </div>
-
-          {/* SUBMIT */}
-
-          <button
-
-            onClick={
-              createProperty
-            }
-
-            disabled={loading}
+            href="/dashboard/landlord/add-property"
 
             className="
+              inline-flex
+              items-center
+              gap-3
               bg-orange-500
               hover:bg-orange-600
               text-white
-              py-5
+              px-7
+              py-4
               rounded-2xl
               font-bold
-              text-lg
               transition
             "
           >
 
-            {
-              loading
+            <Plus size={22} />
 
-                ? "Creating Property..."
+            Add Property
 
-                : "Create Property"
-            }
-
-          </button>
+          </Link>
 
         </div>
+
+        {/* EMPTY */}
+
+        {properties.length === 0 && (
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              shadow-md
+              p-16
+              text-center
+            "
+          >
+
+            <h2
+              className="
+                text-3xl
+                font-bold
+                mb-4
+              "
+            >
+
+              No Properties Yet
+
+            </h2>
+
+            <p
+              className="
+                text-gray-600
+                text-lg
+                mb-8
+              "
+            >
+
+              Start by adding your
+              first property listing.
+
+            </p>
+
+            <Link
+
+              href="/dashboard/landlord/add-property"
+
+              className="
+                inline-flex
+                items-center
+                gap-3
+                bg-orange-500
+                hover:bg-orange-600
+                text-white
+                px-7
+                py-4
+                rounded-2xl
+                font-bold
+                transition
+              "
+            >
+
+              <Plus size={22} />
+
+              Add Property
+
+            </Link>
+
+          </div>
+        )}
+
+        {/* PROPERTY GRID */}
+
+        {properties.length > 0 && (
+
+          <div
+            className="
+              grid
+              md:grid-cols-2
+              xl:grid-cols-3
+              gap-8
+            "
+          >
+
+            {properties.map(
+              (property) => (
+
+                <div
+
+                  key={property.id}
+
+                  className="
+                    bg-white
+                    rounded-3xl
+                    shadow-md
+                    overflow-hidden
+                  "
+                >
+
+                  {/* IMAGE */}
+
+                  <div
+                    className="
+                      relative
+                    "
+                  >
+
+                    <img
+
+                      src={
+                        property.image_url
+                      }
+
+                      alt={
+                        property.title
+                      }
+
+                      className="
+                        w-full
+                        h-64
+                        object-cover
+                      "
+                    />
+
+                    {/* FEATURED BADGE */}
+
+                    {property.featured && (
+
+                      <div
+                        className="
+                          absolute
+                          top-4
+                          left-4
+                          bg-yellow-400
+                          text-black
+                          px-4
+                          py-2
+                          rounded-full
+                          font-bold
+                          shadow-lg
+                          flex
+                          items-center
+                          gap-2
+                        "
+                      >
+
+                        <Star
+                          size={16}
+                        />
+
+                        Featured
+
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* CONTENT */}
+
+                  <div
+                    className="
+                      p-6
+                    "
+                  >
+
+                    <div
+                      className="
+                        flex
+                        items-start
+                        justify-between
+                        gap-4
+                        mb-4
+                      "
+                    >
+
+                      <h2
+                        className="
+                          text-2xl
+                          font-bold
+                        "
+                      >
+
+                        {
+                          property.title
+                        }
+
+                      </h2>
+
+                      <span
+                        className="
+                          bg-orange-100
+                          text-orange-600
+                          px-4
+                          py-2
+                          rounded-full
+                          text-sm
+                          font-semibold
+                          whitespace-nowrap
+                        "
+                      >
+
+                        {
+                          property.category
+                        }
+
+                      </span>
+
+                    </div>
+
+                    {/* LOCATION */}
+
+                    <div
+                      className="
+                        flex
+                        items-center
+                        gap-2
+                        text-gray-600
+                        mb-4
+                      "
+                    >
+
+                      <MapPin
+                        size={18}
+                      />
+
+                      {
+                        property.location
+                      }
+
+                    </div>
+
+                    {/* DESCRIPTION */}
+
+                    <p
+                      className="
+                        text-gray-600
+                        leading-7
+                        mb-6
+                        line-clamp-3
+                      "
+                    >
+
+                      {
+                        property.description
+                      }
+
+                    </p>
+
+                    {/* PROPERTY INFO */}
+
+                    <div
+                      className="
+                        flex
+                        flex-wrap
+                        gap-4
+                        mb-6
+                      "
+                    >
+
+                      <div
+                        className="
+                          flex
+                          items-center
+                          gap-2
+                          bg-gray-100
+                          px-4
+                          py-2
+                          rounded-2xl
+                        "
+                      >
+
+                        <BedDouble
+                          size={18}
+                        />
+
+                        {
+                          property.bedrooms || 0
+                        } Beds
+
+                      </div>
+
+                      <div
+                        className="
+                          flex
+                          items-center
+                          gap-2
+                          bg-gray-100
+                          px-4
+                          py-2
+                          rounded-2xl
+                        "
+                      >
+
+                        <Bath
+                          size={18}
+                        />
+
+                        {
+                          property.bathrooms || 0
+                        } Baths
+
+                      </div>
+
+                      <div
+                        className="
+                          flex
+                          items-center
+                          gap-2
+                          bg-blue-100
+                          text-blue-600
+                          px-4
+                          py-2
+                          rounded-2xl
+                          font-semibold
+                        "
+                      >
+
+                        <Eye
+                          size={18}
+                        />
+
+                        {
+                          property.views || 0
+                        } Views
+
+                      </div>
+
+                    </div>
+
+                    {/* PRICE */}
+
+                    <div
+                      className="
+                        text-3xl
+                        font-extrabold
+                        text-orange-500
+                        mb-8
+                      "
+                    >
+
+                      Ksh {
+                        property.price
+                      }
+
+                    </div>
+
+                    {/* ACTIONS */}
+
+                    <div
+                      className="
+                        grid
+                        grid-cols-2
+                        gap-4
+                        mb-6
+                      "
+                    >
+
+                      {/* EDIT */}
+
+                      <Link
+
+                        href={`/dashboard/landlord/edit/${property.id}`}
+
+                        className="
+                          flex
+                          items-center
+                          justify-center
+                          gap-2
+                          bg-gray-900
+                          hover:bg-black
+                          text-white
+                          py-4
+                          rounded-2xl
+                          font-semibold
+                          transition
+                        "
+                      >
+
+                        <Pencil
+                          size={18}
+                        />
+
+                        Edit
+
+                      </Link>
+
+                      {/* DELETE */}
+
+                      <button
+
+                        onClick={() =>
+                          deleteProperty(
+                            property.id
+                          )
+                        }
+
+                        className="
+                          flex
+                          items-center
+                          justify-center
+                          gap-2
+                          bg-red-500
+                          hover:bg-red-600
+                          text-white
+                          py-4
+                          rounded-2xl
+                          font-semibold
+                          transition
+                        "
+                      >
+
+                        <Trash2
+                          size={18}
+                        />
+
+                        Delete
+
+                      </button>
+
+                    </div>
+
+                    {/* FEATURE TOGGLE */}
+
+                    <button
+
+                      onClick={() =>
+                        toggleFeatured(
+                          property.id,
+                          !!property.featured
+                        )
+                      }
+
+                      className={`
+                        w-full
+                        py-4
+                        rounded-2xl
+                        font-bold
+                        transition
+                        mb-6
+
+                        ${
+                          property.featured
+
+                            ? `
+                              bg-yellow-400
+                              text-black
+                              hover:bg-yellow-500
+                            `
+
+                            : `
+                              bg-orange-500
+                              text-white
+                              hover:bg-orange-600
+                            `
+                        }
+                      `}
+                    >
+
+                      {property.featured
+
+                        ? "Remove Featured"
+
+                        : "Make Featured"}
+
+                    </button>
+
+                    {/* IMAGE UPLOADER */}
+
+                    <div
+                      className="
+                        border-t
+                        pt-6
+                      "
+                    >
+
+                      <PropertyImageUploader
+
+                        propertyId={
+                          property.id
+                        }
+
+                        onUploadComplete={
+                          fetchProperties
+                        }
+
+                      />
+
+                    </div>
+
+                  </div>
+
+                </div>
+              )
+            )}
+
+          </div>
+        )}
 
       </div>
 
