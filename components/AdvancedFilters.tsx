@@ -86,7 +86,7 @@ export default function AdvancedFilters({
         className="
           grid
           md:grid-cols-2
-          lg:grid-cols-3
+          lg:grid-cols-4
           gap-5
         "
       >
@@ -189,6 +189,54 @@ export default function AdvancedFilters({
             Villa
           </option>
 
+          <option value="Studio">
+            Studio
+          </option>
+
+        </select>
+
+        {/* BEDROOMS */}
+
+        <select
+
+          value={bedrooms}
+
+          onChange={(e) =>
+            setBedrooms(
+              e.target.value
+            )
+          }
+
+          className="
+            border
+            rounded-2xl
+            p-4
+            outline-none
+            focus:ring-2
+            focus:ring-orange-500
+          "
+        >
+
+          <option value="">
+            Any Bedrooms
+          </option>
+
+          <option value="1">
+            1 Bedroom
+          </option>
+
+          <option value="2">
+            2 Bedrooms
+          </option>
+
+          <option value="3">
+            3 Bedrooms
+          </option>
+
+          <option value="4">
+            4+ Bedrooms
+          </option>
+
         </select>
 
         {/* MIN PRICE */}
@@ -247,50 +295,6 @@ export default function AdvancedFilters({
           "
         />
 
-        {/* BEDROOMS */}
-
-        <select
-
-          value={bedrooms}
-
-          onChange={(e) =>
-            setBedrooms(
-              e.target.value
-            )
-          }
-
-          className="
-            border
-            rounded-2xl
-            p-4
-            outline-none
-            focus:ring-2
-            focus:ring-orange-500
-          "
-        >
-
-          <option value="">
-            Any Bedrooms
-          </option>
-
-          <option value="1">
-            1 Bedroom
-          </option>
-
-          <option value="2">
-            2 Bedrooms
-          </option>
-
-          <option value="3">
-            3 Bedrooms
-          </option>
-
-          <option value="4">
-            4+ Bedrooms
-          </option>
-
-        </select>
-
         {/* SORT */}
 
         <select
@@ -329,7 +333,41 @@ export default function AdvancedFilters({
             Most Bedrooms
           </option>
 
+          <option value="views">
+            Most Viewed
+          </option>
+
         </select>
+
+        {/* CLEAR FILTERS */}
+
+        <button
+
+          onClick={() => {
+
+            setSearch("")
+            setLocation("")
+            setCategory("")
+            setMinPrice("")
+            setMaxPrice("")
+            setBedrooms("")
+            setSortBy("latest")
+          }}
+
+          className="
+            bg-orange-500
+            hover:bg-orange-600
+            text-white
+            rounded-2xl
+            p-4
+            font-bold
+            transition
+          "
+        >
+
+          Clear Filters
+
+        </button>
 
       </div>
 

@@ -57,6 +57,8 @@ interface Property {
 
   bathrooms?: number
 
+  views?: number
+
   created_at?: string
 }
 
@@ -105,6 +107,55 @@ export default function PropertyDetailsPage() {
     galleryImages,
     setGalleryImages,
   ] = useState<string[]>([])
+
+  // INCREMENT VIEWS
+
+  async function incrementViews() {
+
+    const {
+      data,
+      error,
+    } = await supabase
+
+      .from("properties")
+
+      .select("views")
+
+      .eq("id", id)
+
+      .single()
+
+    if (error || !data) {
+
+      console.error(error)
+
+      return
+    }
+
+    const currentViews =
+
+      data.views || 0
+
+    const {
+      error: updateError,
+    } = await supabase
+
+      .from("properties")
+
+      .update({
+        views:
+          currentViews + 1,
+      })
+
+      .eq("id", id)
+
+    if (updateError) {
+
+      console.error(
+        updateError
+      )
+    }
+  }
 
   // FETCH PROPERTY
 
@@ -172,7 +223,7 @@ export default function PropertyDetailsPage() {
       reviewsData || []
     )
 
-    // GALLERY IMAGES
+    // GALLERY
 
     const {
       data: galleryData,
@@ -208,6 +259,8 @@ export default function PropertyDetailsPage() {
   useEffect(() => {
 
     if (id) {
+
+      incrementViews()
 
       fetchProperty()
     }
@@ -527,6 +580,25 @@ export default function PropertyDetailsPage() {
 
                 </div>
 
+                {/* VIEWS */}
+
+                <div
+                  className="
+                    bg-blue-100
+                    text-blue-600
+                    px-5
+                    py-3
+                    rounded-2xl
+                    font-semibold
+                  "
+                >
+
+                  👁 {
+                    property.views || 0
+                  } Views
+
+                </div>
+
               </div>
 
               <h2
@@ -557,7 +629,7 @@ export default function PropertyDetailsPage() {
 
             </div>
 
-            {/* MAP SECTION */}
+            {/* MAP */}
 
             <div
               className="
@@ -644,8 +716,6 @@ export default function PropertyDetailsPage() {
 
           <div>
 
-            {/* CONTACT CARD */}
-
             <div
               className="
                 bg-white
@@ -692,7 +762,7 @@ export default function PropertyDetailsPage() {
                 "
               >
 
-                {/* CALL BUTTON */}
+                {/* CALL */}
 
                 <a
 
