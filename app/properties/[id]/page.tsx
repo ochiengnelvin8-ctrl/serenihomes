@@ -13,11 +13,11 @@ from "next/navigation"
 import {
   Bath,
   BedDouble,
+  Eye,
   MapPin,
   Phone,
   Share2,
   Star,
-  Eye,
 } from "lucide-react"
 
 import { supabase }
@@ -40,6 +40,9 @@ from "@/components/ReviewForm"
 
 import ReviewsList
 from "@/components/ReviewsList"
+
+import BookingForm
+from "@/components/BookingForm"
 
 interface Property {
 
@@ -66,6 +69,8 @@ interface Property {
   featured?: boolean
 
   views?: number
+
+  user_id?: string
 }
 
 interface PropertyImage {
@@ -362,6 +367,8 @@ PropertyDetailsPage() {
           "
         />
 
+        {/* OVERLAY */}
+
         <div
           className="
             absolute
@@ -429,10 +436,10 @@ PropertyDetailsPage() {
           </button>
 
           <FavoriteButton
-  propertyId={
-    property.id
-  }
-/>
+            propertyId={
+              property.id
+            }
+          />
 
         </div>
 
@@ -757,15 +764,15 @@ PropertyDetailsPage() {
 
                 <PropertyGallery
 
-  mainImage={
-    property.image_url
-  }
+                  mainImage={
+                    property.image_url
+                  }
 
-  galleryImages={
-    galleryImages
-  }
+                  galleryImages={
+                    galleryImages
+                  }
 
-/>
+                />
 
               </div>
             )}
@@ -854,7 +861,7 @@ PropertyDetailsPage() {
 
           </div>
 
-          {/* SIDEBAR */}
+          {/* RIGHT SIDEBAR */}
 
           <div
             className="
@@ -926,6 +933,42 @@ PropertyDetailsPage() {
                 }
 
               />
+
+              {/* BOOKING FORM */}
+
+              <div
+                className="
+                  mt-10
+                  pt-8
+                  border-t
+                "
+              >
+
+                <h3
+                  className="
+                    text-2xl
+                    font-bold
+                    mb-6
+                  "
+                >
+
+                  Request Booking
+
+                </h3>
+
+                <BookingForm
+
+                  propertyId={
+                    property.id
+                  }
+
+                  landlordId={
+                    property.user_id || ""
+                  }
+
+                />
+
+              </div>
 
             </div>
 

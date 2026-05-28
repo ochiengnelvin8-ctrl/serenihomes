@@ -10,6 +10,8 @@ from "@/lib/supabase"
 interface Props {
 
   propertyId: string
+
+  landlordId: string
 }
 
 export default function
@@ -17,11 +19,12 @@ BookingForm({
 
   propertyId,
 
+  landlordId,
 }: Props) {
 
   const [
-    bookingDate,
-    setBookingDate,
+    moveInDate,
+    setMoveInDate,
   ] = useState("")
 
   const [
@@ -34,8 +37,7 @@ BookingForm({
     setLoading,
   ] = useState(false)
 
-  async function
-  handleBooking(
+  async function submitBooking(
     e: React.FormEvent
   ) {
 
@@ -44,8 +46,6 @@ BookingForm({
     try {
 
       setLoading(true)
-
-      // CURRENT USER
 
       const {
         data: authData,
@@ -64,8 +64,6 @@ BookingForm({
         return
       }
 
-      // CREATE BOOKING
-
       const {
         error,
       } = await supabase
@@ -80,10 +78,16 @@ BookingForm({
           tenant_id:
             user.id,
 
-          booking_date:
-            bookingDate,
+          landlord_id:
+            landlordId,
+
+          move_in_date:
+            moveInDate,
 
           message,
+
+          status:
+            "pending",
         })
 
       if (error) {
@@ -91,17 +95,18 @@ BookingForm({
         console.error(error)
 
         alert(
-          "Booking failed"
+          "Failed to send booking"
         )
 
         return
       }
 
       alert(
-        "Viewing request sent successfully!"
+        "Booking request sent!"
       )
 
-      setBookingDate("")
+      setMoveInDate("")
+
       setMessage("")
 
     } catch (error) {
@@ -117,47 +122,29 @@ BookingForm({
   return (
 
     <form
+
       onSubmit={
-        handleBooking
+        submitBooking
       }
 
       className="
-        bg-white
-        rounded-3xl
-        shadow-md
-        p-8
+        space-y-5
       "
     >
 
-      <h2
-        className="
-          text-3xl
-          font-bold
-          mb-8
-        "
-      >
-
-        Request Viewing
-
-      </h2>
-
       {/* DATE */}
 
-      <div
-        className="
-          mb-6
-        "
-      >
+      <div>
 
         <label
           className="
             block
-            mb-3
+            mb-2
             font-semibold
           "
         >
 
-          Preferred Date
+          Preferred Move-in Date
 
         </label>
 
@@ -167,10 +154,13 @@ BookingForm({
 
           required
 
-          value={bookingDate}
+          value={
+            moveInDate
+          }
 
           onChange={(e) =>
-            setBookingDate(
+
+            setMoveInDate(
               e.target.value
             )
           }
@@ -179,7 +169,9 @@ BookingForm({
             w-full
             border
             rounded-2xl
-            p-4
+            px-5
+            py-4
+            outline-none
           "
         />
 
@@ -187,16 +179,12 @@ BookingForm({
 
       {/* MESSAGE */}
 
-      <div
-        className="
-          mb-8
-        "
-      >
+      <div>
 
         <label
           className="
             block
-            mb-3
+            mb-2
             font-semibold
           "
         >
@@ -210,12 +198,13 @@ BookingForm({
           rows={5}
 
           placeholder="
-          Ask questions or leave a message...
+            Tell landlord about yourself...
           "
 
           value={message}
 
           onChange={(e) =>
+
             setMessage(
               e.target.value
             )
@@ -225,7 +214,10 @@ BookingForm({
             w-full
             border
             rounded-2xl
-            p-4
+            px-5
+            py-4
+            outline-none
+            resize-none
           "
         />
 
@@ -243,22 +235,19 @@ BookingForm({
           w-full
           bg-orange-500
           hover:bg-orange-600
-          disabled:opacity-50
           text-white
           py-4
           rounded-2xl
           font-bold
-          text-lg
           transition
         "
       >
 
         {loading
 
-          ? "Sending Request..."
+          ? "Sending..."
 
-          : "Book Viewing"}
-
+          : "Request Booking"}
       </button>
 
     </form>

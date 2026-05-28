@@ -14,6 +14,7 @@ import {
   Building2,
   Heart,
   LayoutDashboard,
+  CalendarDays,
   LogOut,
   User,
 } from "lucide-react"
@@ -21,8 +22,7 @@ import {
 import { supabase }
 from "@/lib/supabase"
 
-export default function
-Navbar() {
+export default function Navbar() {
 
   const [
     mobileMenuOpen,
@@ -43,9 +43,7 @@ Navbar() {
     } =
       await supabase.auth.getUser()
 
-    setUser(
-      data.user
-    )
+    setUser(data.user)
   }
 
   // LOGOUT
@@ -54,8 +52,7 @@ Navbar() {
 
     await supabase.auth.signOut()
 
-    window.location.href =
-      "/"
+    window.location.href = "/"
   }
 
   useEffect(() => {
@@ -152,7 +149,7 @@ Navbar() {
 
           </Link>
 
-          {/* DESKTOP MENU */}
+          {/* DESKTOP NAV */}
 
           <div
             className="
@@ -164,9 +161,7 @@ Navbar() {
           >
 
             <Link
-
               href="/"
-
               className="
                 font-semibold
                 hover:text-orange-500
@@ -179,9 +174,7 @@ Navbar() {
             </Link>
 
             <Link
-
               href="/properties"
-
               className="
                 font-semibold
                 hover:text-orange-500
@@ -193,37 +186,50 @@ Navbar() {
 
             </Link>
 
-            <Link
-
-              href="/favorites"
-
-              className="
-                font-semibold
-                hover:text-orange-500
-                transition
-              "
-            >
-
-              Favorites
-
-            </Link>
-
             {user && (
 
-              <Link
+              <>
 
-                href="/dashboard/landlord"
+                <Link
+                  href="/favorites"
+                  className="
+                    font-semibold
+                    hover:text-orange-500
+                    transition
+                  "
+                >
 
-                className="
-                  font-semibold
-                  hover:text-orange-500
-                  transition
-                "
-              >
+                  Favorites
 
-                Dashboard
+                </Link>
 
-              </Link>
+                <Link
+                  href="/dashboard/landlord"
+                  className="
+                    font-semibold
+                    hover:text-orange-500
+                    transition
+                  "
+                >
+
+                  Dashboard
+
+                </Link>
+
+                <Link
+                  href="/dashboard/bookings"
+                  className="
+                    font-semibold
+                    hover:text-orange-500
+                    transition
+                  "
+                >
+
+                  Bookings
+
+                </Link>
+
+              </>
             )}
 
           </div>
@@ -244,9 +250,7 @@ Navbar() {
               <>
 
                 <Link
-
                   href="/login"
-
                   className="
                     px-5
                     py-3
@@ -262,9 +266,7 @@ Navbar() {
                 </Link>
 
                 <Link
-
                   href="/signup"
-
                   className="
                     bg-orange-500
                     hover:bg-orange-600
@@ -315,12 +317,12 @@ Navbar() {
                   <span
                     className="
                       font-medium
+                      max-w-[180px]
+                      truncate
                     "
                   >
 
-                    {
-                      user.email
-                    }
+                    {user.email}
 
                   </span>
 
@@ -358,7 +360,7 @@ Navbar() {
 
           </div>
 
-          {/* MOBILE MENU BUTTON */}
+          {/* MOBILE BUTTON */}
 
           <button
 
@@ -405,9 +407,7 @@ Navbar() {
           >
 
             <Link
-
               href="/"
-
               className="
                 flex
                 items-center
@@ -416,18 +416,14 @@ Navbar() {
               "
             >
 
-              <Home
-                size={22}
-              />
+              <Home size={22} />
 
               Home
 
             </Link>
 
             <Link
-
               href="/properties"
-
               className="
                 flex
                 items-center
@@ -444,47 +440,65 @@ Navbar() {
 
             </Link>
 
-            <Link
-
-              href="/favorites"
-
-              className="
-                flex
-                items-center
-                gap-3
-                font-semibold
-              "
-            >
-
-              <Heart
-                size={22}
-              />
-
-              Favorites
-
-            </Link>
-
             {user && (
 
-              <Link
+              <>
 
-                href="/dashboard/landlord"
+                <Link
+                  href="/favorites"
+                  className="
+                    flex
+                    items-center
+                    gap-3
+                    font-semibold
+                  "
+                >
 
-                className="
-                  flex
-                  items-center
-                  gap-3
-                  font-semibold
-                "
-              >
+                  <Heart
+                    size={22}
+                  />
 
-                <LayoutDashboard
-                  size={22}
-                />
+                  Favorites
 
-                Dashboard
+                </Link>
 
-              </Link>
+                <Link
+                  href="/dashboard/landlord"
+                  className="
+                    flex
+                    items-center
+                    gap-3
+                    font-semibold
+                  "
+                >
+
+                  <LayoutDashboard
+                    size={22}
+                  />
+
+                  Dashboard
+
+                </Link>
+
+                <Link
+                  href="/dashboard/bookings"
+                  className="
+                    flex
+                    items-center
+                    gap-3
+                    font-semibold
+                  "
+                >
+
+                  <CalendarDays
+                    size={22}
+                  />
+
+                  Bookings
+
+                </Link>
+
+              </>
             )}
 
             {!user ? (
@@ -499,9 +513,7 @@ Navbar() {
               >
 
                 <Link
-
                   href="/login"
-
                   className="
                     border
                     text-center
@@ -516,9 +528,7 @@ Navbar() {
                 </Link>
 
                 <Link
-
                   href="/signup"
-
                   className="
                     bg-orange-500
                     text-white
