@@ -5,14 +5,11 @@ import {
   useState,
 } from "react"
 
-import { supabase }
-from "@/lib/supabase"
-
 import PropertyCard
 from "@/components/PropertyCard"
 
-import AdvancedFilters
-from "@/components/AdvancedFilters"
+import { supabase }
+from "@/lib/supabase"
 
 interface Property {
 
@@ -30,18 +27,17 @@ interface Property {
 
   category: string
 
-  featured?: boolean
-
   bedrooms?: number
 
   bathrooms?: number
 
-  views?: number
+  featured?: boolean
 
   created_at?: string
 }
 
-export default function PropertiesPage() {
+export default function
+PropertiesPage() {
 
   const [
     properties,
@@ -53,22 +49,17 @@ export default function PropertiesPage() {
     setLoading,
   ] = useState(true)
 
-  // FILTER STATES
+  // SEARCH STATES
 
   const [
-    search,
-    setSearch,
+    searchTerm,
+    setSearchTerm,
   ] = useState("")
 
   const [
-    location,
-    setLocation,
-  ] = useState("")
-
-  const [
-    category,
-    setCategory,
-  ] = useState("")
+    selectedCategory,
+    setSelectedCategory,
+  ] = useState("All")
 
   const [
     minPrice,
@@ -81,281 +72,149 @@ export default function PropertiesPage() {
   ] = useState("")
 
   const [
-    bedrooms,
-    setBedrooms,
-  ] = useState("")
-
-  // SORTING
-
-  const [
-    sortBy,
-    setSortBy,
-  ] = useState("latest")
-
-  // PAGINATION
-
-  const [
-    currentPage,
-    setCurrentPage,
-  ] = useState(1)
-
-  const [
-    totalProperties,
-    setTotalProperties,
-  ] = useState(0)
-
-  const propertiesPerPage = 6
-
-  const totalPages =
-
-    Math.ceil(
-      totalProperties /
-      propertiesPerPage
-    )
+    sortOption,
+    setSortOption,
+  ] = useState("newest")
 
   // FETCH PROPERTIES
 
   async function fetchProperties() {
 
-    setLoading(true)
+    try {
 
-    let query =
+      setLoading(true)
 
-      supabase
+      let query =
+        supabase
 
-        .from("properties")
+          .from("properties")
 
-        .select("*", {
-          count: "exact",
-        })
+          .select("*")
 
-    // SEARCH
+      // SEARCH
 
-    if (search) {
+      if (searchTerm) {
 
-      query =
-        query.or(
+        query = query.or(
 
-          `title.ilike.%${search}%,
+          `title.ilike.%${searchTerm}%,
 
-          description.ilike.%${search}%`
+          location.ilike.%${searchTerm}%,
+
+          description.ilike.%${searchTerm}%`
         )
-    }
+      }
 
-    // LOCATION
-
-    if (location) {
-
-      query =
-        query.ilike(
-          "location",
-          `%${location}%`
-        )
-    }
-
-    // CATEGORY
-
-    if (category) {
-
-      query =
-        query.eq(
-          "category",
-          category
-        )
-    }
-
-    // MIN PRICE
-
-    if (minPrice) {
-
-      query =
-        query.gte(
-          "price",
-          Number(minPrice)
-        )
-    }
-
-    // MAX PRICE
-
-    if (maxPrice) {
-
-      query =
-        query.lte(
-          "price",
-          Number(maxPrice)
-        )
-    }
-
-    // BEDROOMS
-
-    if (bedrooms) {
+      // CATEGORY
 
       if (
-        bedrooms === "4"
+        selectedCategory &&
+        selectedCategory !== "All"
       ) {
 
-        query =
-          query.gte(
-            "bedrooms",
-            4
-          )
+        query = query.eq(
 
-      } else {
+          "category",
 
-        query =
-          query.eq(
-            "bedrooms",
-            Number(
-              bedrooms
-            )
-          )
+          selectedCategory
+        )
       }
-    }
 
-    // SORTING
+      // MIN PRICE
 
-    if (
-      sortBy === "latest"
-    ) {
+      if (minPrice) {
 
-      query =
-        query.order(
+        query = query.gte(
+
+          "price",
+
+          Number(minPrice)
+        )
+      }
+
+      // MAX PRICE
+
+      if (maxPrice) {
+
+        query = query.lte(
+
+          "price",
+
+          Number(maxPrice)
+        )
+      }
+
+      // SORTING
+
+      if (
+        sortOption === "newest"
+      ) {
+
+        query = query.order(
+
           "created_at",
+
           {
             ascending: false,
           }
         )
-    }
+      }
 
-    if (
-      sortBy === "price-low"
-    ) {
+      if (
+        sortOption === "cheapest"
+      ) {
 
-      query =
-        query.order(
+        query = query.order(
+
           "price",
+
           {
             ascending: true,
           }
         )
-    }
+      }
 
-    if (
-      sortBy === "price-high"
-    ) {
+      if (
+        sortOption === "expensive"
+      ) {
 
-      query =
-        query.order(
+        query = query.order(
+
           "price",
+
           {
             ascending: false,
           }
         )
-    }
+      }
 
-    if (
-      sortBy === "bedrooms"
-    ) {
+      const {
+        data,
+        error,
+      } = await query
 
-      query =
-        query.order(
-          "bedrooms",
-          {
-            ascending: false,
-          }
-        )
-    }
+      if (error) {
 
-    if (
-      sortBy === "views"
-    ) {
+        console.error(error)
 
-      query =
-        query.order(
-          "views",
-          {
-            ascending: false,
-          }
-        )
-    }
-
-    if (
-      sortBy === "featured"
-    ) {
-
-      query =
-        query.order(
-          "featured",
-          {
-            ascending: false,
-          }
-        )
-    }
-
-    // PAGINATION
-
-    const from =
-
-      (currentPage - 1)
-      *
-      propertiesPerPage
-
-    const to =
-
-      from
-      +
-      propertiesPerPage
-      -
-      1
-
-    query =
-      query.range(
-        from,
-        to
-      )
-
-    const {
-      data,
-      error,
-      count,
-    } = await query
-
-    if (error) {
-
-      console.error(error)
-
-    } else {
+        return
+      }
 
       setProperties(
         data || []
       )
 
-      setTotalProperties(
-        count || 0
-      )
-    }
+    } catch (error) {
 
-    setLoading(false)
+      console.error(error)
+
+    } finally {
+
+      setLoading(false)
+    }
   }
 
-  // RESET PAGE
-
-  useEffect(() => {
-
-    setCurrentPage(1)
-
-  }, [
-
-    search,
-    location,
-    category,
-    minPrice,
-    maxPrice,
-    bedrooms,
-    sortBy,
-  ])
-
-  // FETCH
+  // AUTO REFRESH
 
   useEffect(() => {
 
@@ -363,14 +222,15 @@ export default function PropertiesPage() {
 
   }, [
 
-    search,
-    location,
-    category,
+    searchTerm,
+
+    selectedCategory,
+
     minPrice,
+
     maxPrice,
-    bedrooms,
-    sortBy,
-    currentPage,
+
+    sortOption,
   ])
 
   return (
@@ -380,7 +240,7 @@ export default function PropertiesPage() {
         min-h-screen
         bg-orange-50
         px-6
-        py-10
+        py-12
       "
     >
 
@@ -402,8 +262,7 @@ export default function PropertiesPage() {
           <h1
             className="
               text-5xl
-              font-extrabold
-              text-gray-900
+              font-black
               mb-4
             "
           >
@@ -414,15 +273,14 @@ export default function PropertiesPage() {
 
           <p
             className="
-              text-lg
               text-gray-600
+              text-lg
             "
           >
 
-            Discover apartments,
-            villas, studios,
-            bedsitters and homes
-            across Kenya.
+            Find your perfect
+            home with advanced
+            search and filters.
 
           </p>
 
@@ -430,85 +288,194 @@ export default function PropertiesPage() {
 
         {/* FILTERS */}
 
-        <AdvancedFilters
-
-          search={search}
-          setSearch={setSearch}
-
-          location={location}
-          setLocation={setLocation}
-
-          category={category}
-          setCategory={setCategory}
-
-          minPrice={minPrice}
-          setMinPrice={setMinPrice}
-
-          maxPrice={maxPrice}
-          setMaxPrice={setMaxPrice}
-
-          bedrooms={bedrooms}
-          setBedrooms={setBedrooms}
-
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-
-        />
-
-        {/* RESULTS INFO */}
-
-        {!loading && (
+        <div
+          className="
+            bg-white
+            rounded-3xl
+            p-8
+            shadow-md
+            mb-10
+          "
+        >
 
           <div
             className="
-              flex
-              items-center
-              justify-between
-              mb-8
+              grid
+              md:grid-cols-2
+              xl:grid-cols-5
+              gap-5
             "
           >
 
-            <p
+            {/* SEARCH */}
+
+            <input
+
+              type="text"
+
+              placeholder="
+                Search properties...
+              "
+
+              value={searchTerm}
+
+              onChange={(e) =>
+
+                setSearchTerm(
+                  e.target.value
+                )
+              }
+
               className="
-                text-gray-600
-                text-lg
+                border
+                rounded-2xl
+                px-5
+                py-4
+                outline-none
+              "
+            />
+
+            {/* CATEGORY */}
+
+            <select
+
+              value={
+                selectedCategory
+              }
+
+              onChange={(e) =>
+
+                setSelectedCategory(
+                  e.target.value
+                )
+              }
+
+              className="
+                border
+                rounded-2xl
+                px-5
+                py-4
+                outline-none
               "
             >
 
-              Showing
+              <option>
+                All
+              </option>
 
-              <span
-                className="
-                  font-bold
-                  text-gray-900
-                  mx-2
-                "
-              >
+              <option>
+                Apartment
+              </option>
 
-                {properties.length}
+              <option>
+                Bedsitter
+              </option>
 
-              </span>
+              <option>
+                Hostel
+              </option>
 
-              of
+              <option>
+                Mansion
+              </option>
 
-              <span
-                className="
-                  font-bold
-                  text-gray-900
-                  mx-2
-                "
-              >
+            </select>
 
-                {totalProperties}
+            {/* MIN PRICE */}
 
-              </span>
+            <input
 
-              properties
+              type="number"
 
-            </p>
+              placeholder="
+                Min price
+              "
+
+              value={minPrice}
+
+              onChange={(e) =>
+
+                setMinPrice(
+                  e.target.value
+                )
+              }
+
+              className="
+                border
+                rounded-2xl
+                px-5
+                py-4
+                outline-none
+              "
+            />
+
+            {/* MAX PRICE */}
+
+            <input
+
+              type="number"
+
+              placeholder="
+                Max price
+              "
+
+              value={maxPrice}
+
+              onChange={(e) =>
+
+                setMaxPrice(
+                  e.target.value
+                )
+              }
+
+              className="
+                border
+                rounded-2xl
+                px-5
+                py-4
+                outline-none
+              "
+            />
+
+            {/* SORT */}
+
+            <select
+
+              value={sortOption}
+
+              onChange={(e) =>
+
+                setSortOption(
+                  e.target.value
+                )
+              }
+
+              className="
+                border
+                rounded-2xl
+                px-5
+                py-4
+                outline-none
+              "
+            >
+
+              <option value="newest">
+                Newest
+              </option>
+
+              <option value="cheapest">
+                Cheapest
+              </option>
+
+              <option value="expensive">
+                Most Expensive
+              </option>
+
+            </select>
 
           </div>
-        )}
+
+        </div>
 
         {/* LOADING */}
 
@@ -516,20 +483,21 @@ export default function PropertiesPage() {
 
           <div
             className="
-              text-center
+              flex
+              justify-center
               py-24
             "
           >
 
             <h2
               className="
-                text-3xl
-                font-bold
+                text-4xl
+                font-black
                 text-orange-500
               "
             >
 
-              Loading properties...
+              Loading...
 
             </h2>
 
@@ -545,33 +513,32 @@ export default function PropertiesPage() {
             className="
               bg-white
               rounded-3xl
-              shadow-md
-              p-16
+              p-14
               text-center
+              shadow-md
             "
           >
 
             <h2
               className="
-                text-3xl
-                font-bold
+                text-4xl
+                font-black
                 mb-4
               "
             >
 
-              No Properties Found
+              No properties found
 
             </h2>
 
             <p
               className="
-                text-gray-600
-                text-lg
+                text-gray-500
               "
             >
 
               Try adjusting your
-              search filters.
+              filters or search.
 
             </p>
 
@@ -583,224 +550,70 @@ export default function PropertiesPage() {
         {!loading &&
           properties.length > 0 && (
 
-          <>
-            <div
-              className="
-                grid
-                md:grid-cols-2
-                lg:grid-cols-3
-                gap-8
-              "
-            >
+          <div
+            className="
+              grid
+              md:grid-cols-2
+              xl:grid-cols-3
+              gap-8
+            "
+          >
 
-              {properties.map(
-                (property) => (
+            {properties.map(
+              (property) => (
 
-                  <div
-                    key={property.id}
+                <PropertyCard
 
-                    className="
-                      relative
-                    "
-                  >
-
-                    {/* FEATURED BADGE */}
-
-                    {property.featured && (
-
-                      <div
-                        className="
-                          absolute
-                          top-4
-                          left-4
-                          z-10
-                          bg-yellow-400
-                          text-black
-                          px-4
-                          py-2
-                          rounded-full
-                          font-bold
-                          shadow-lg
-                        "
-                      >
-
-                        ⭐ Featured
-
-                      </div>
-                    )}
-
-                    <PropertyCard
-
-                      id={property.id}
-
-                      title={
-                        property.title
-                      }
-
-                      description={
-                        property.description
-                      }
-
-                      location={
-                        property.location
-                      }
-
-                      price={
-                        property.price
-                      }
-
-                      image_url={
-                        property.image_url
-                      }
-
-                      category={
-                        property.category
-                      }
-
-                    />
-
-                  </div>
-                )
-              )}
-
-            </div>
-
-            {/* PAGINATION */}
-
-            {totalPages > 1 && (
-
-              <div
-                className="
-                  flex
-                  justify-center
-                  items-center
-                  gap-3
-                  mt-14
-                  flex-wrap
-                "
-              >
-
-                {/* PREVIOUS */}
-
-                <button
-
-                  onClick={() =>
-                    setCurrentPage(
-                      (prev) =>
-                        Math.max(
-                          prev - 1,
-                          1
-                        )
-                    )
+                  key={
+                    property.id
                   }
 
-                  disabled={
-                    currentPage === 1
+                  id={
+                    property.id
                   }
 
-                  className="
-                    px-5
-                    py-3
-                    rounded-2xl
-                    bg-white
-                    shadow
-                    font-semibold
-                    disabled:opacity-50
-                  "
-                >
-
-                  Previous
-
-                </button>
-
-                {/* PAGE NUMBERS */}
-
-                {Array.from(
-                  {
-                    length:
-                      totalPages,
-                  },
-
-                  (_, index) => (
-
-                    <button
-
-                      key={index}
-
-                      onClick={() =>
-                        setCurrentPage(
-                          index + 1
-                        )
-                      }
-
-                      className={`
-                        px-5
-                        py-3
-                        rounded-2xl
-                        font-semibold
-                        transition
-
-                        ${
-                          currentPage ===
-                          index + 1
-
-                            ? `
-                              bg-orange-500
-                              text-white
-                            `
-
-                            : `
-                              bg-white
-                              shadow
-                            `
-                        }
-                      `}
-                    >
-
-                      {index + 1}
-
-                    </button>
-                  )
-                )}
-
-                {/* NEXT */}
-
-                <button
-
-                  onClick={() =>
-                    setCurrentPage(
-                      (prev) =>
-                        Math.min(
-                          prev + 1,
-                          totalPages
-                        )
-                    )
+                  title={
+                    property.title
                   }
 
-                  disabled={
-                    currentPage ===
-                    totalPages
+                  description={
+                    property.description
                   }
 
-                  className="
-                    px-5
-                    py-3
-                    rounded-2xl
-                    bg-white
-                    shadow
-                    font-semibold
-                    disabled:opacity-50
-                  "
-                >
+                  location={
+                    property.location
+                  }
 
-                  Next
+                  price={
+                    property.price
+                  }
 
-                </button>
+                  image_url={
+                    property.image_url
+                  }
 
-              </div>
+                  category={
+                    property.category
+                  }
+
+                  bedrooms={
+                    property.bedrooms
+                  }
+
+                  bathrooms={
+                    property.bathrooms
+                  }
+
+                  featured={
+                    property.featured
+                  }
+
+                />
+
+              )
             )}
 
-          </>
+          </div>
         )}
 
       </div>
