@@ -15,6 +15,7 @@ import {
   Star,
   Pencil,
   X,
+  BarChart3,
 } from "lucide-react"
 
 import { supabase }
@@ -73,6 +74,23 @@ LandlordDashboardPage() {
     userId,
     setUserId,
   ] = useState("")
+
+  // ANALYTICS
+
+  const [
+    totalViews,
+    setTotalViews,
+  ] = useState(0)
+
+  const [
+    featuredCount,
+    setFeaturedCount,
+  ] = useState(0)
+
+  const [
+    averagePrice,
+    setAveragePrice,
+  ] = useState(0)
 
   // MAIN IMAGE
 
@@ -177,8 +195,78 @@ LandlordDashboardPage() {
         return
       }
 
-      setProperties(
+      const propertiesData =
         data || []
+
+      setProperties(
+        propertiesData
+      )
+
+      // TOTAL VIEWS
+
+      const views =
+        propertiesData.reduce(
+
+          (
+            sum,
+            property
+          ) =>
+
+            sum +
+            (property.views || 0),
+
+          0
+        )
+
+      setTotalViews(
+        views
+      )
+
+      // FEATURED COUNT
+
+      const featured =
+        propertiesData.filter(
+          (property) =>
+            property.featured
+        ).length
+
+      setFeaturedCount(
+        featured
+      )
+
+      // AVERAGE PRICE
+
+      const totalPrice =
+        propertiesData.reduce(
+
+          (
+            sum,
+            property
+          ) =>
+
+            sum +
+            Number(
+              property.price || 0
+            ),
+
+          0
+        )
+
+      const average =
+
+        propertiesData.length > 0
+
+          ? Math.round(
+
+              totalPrice /
+
+              propertiesData.length
+            )
+
+          : 0
+
+      setAveragePrice(
+        average
       )
 
     } catch (error) {
@@ -561,7 +649,7 @@ LandlordDashboardPage() {
               "
             >
 
-              <Home
+              <BarChart3
                 size={38}
                 className="
                   text-orange-500
@@ -576,7 +664,7 @@ LandlordDashboardPage() {
                   "
                 >
 
-                  Total Properties
+                  Total Views
 
                 </p>
 
@@ -587,15 +675,168 @@ LandlordDashboardPage() {
                   "
                 >
 
-                  {
-                    properties.length
-                  }
+                  {totalViews}
 
                 </h2>
 
               </div>
 
             </div>
+
+          </div>
+
+        </div>
+
+        {/* ANALYTICS */}
+
+        <div
+          className="
+            grid
+            md:grid-cols-2
+            xl:grid-cols-4
+            gap-6
+            mb-12
+          "
+        >
+
+          {/* TOTAL LISTINGS */}
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              p-8
+              shadow-md
+            "
+          >
+
+            <p
+              className="
+                text-gray-500
+                mb-3
+              "
+            >
+
+              Total Listings
+
+            </p>
+
+            <h2
+              className="
+                text-5xl
+                font-black
+              "
+            >
+
+              {properties.length}
+
+            </h2>
+
+          </div>
+
+          {/* TOTAL VIEWS */}
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              p-8
+              shadow-md
+            "
+          >
+
+            <p
+              className="
+                text-gray-500
+                mb-3
+              "
+            >
+
+              Total Views
+
+            </p>
+
+            <h2
+              className="
+                text-5xl
+                font-black
+              "
+            >
+
+              {totalViews}
+
+            </h2>
+
+          </div>
+
+          {/* FEATURED */}
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              p-8
+              shadow-md
+            "
+          >
+
+            <p
+              className="
+                text-gray-500
+                mb-3
+              "
+            >
+
+              Featured Listings
+
+            </p>
+
+            <h2
+              className="
+                text-5xl
+                font-black
+                text-orange-500
+              "
+            >
+
+              {featuredCount}
+
+            </h2>
+
+          </div>
+
+          {/* AVG PRICE */}
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              p-8
+              shadow-md
+            "
+          >
+
+            <p
+              className="
+                text-gray-500
+                mb-3
+              "
+            >
+
+              Average Price
+
+            </p>
+
+            <h2
+              className="
+                text-4xl
+                font-black
+              "
+            >
+
+              Ksh {averagePrice}
+
+            </h2>
 
           </div>
 
@@ -653,8 +894,6 @@ LandlordDashboardPage() {
             "
           >
 
-            {/* MAIN IMAGE */}
-
             <div>
 
               <h3
@@ -676,8 +915,6 @@ LandlordDashboardPage() {
               />
 
             </div>
-
-            {/* GALLERY */}
 
             <div>
 
@@ -702,376 +939,6 @@ LandlordDashboardPage() {
               />
 
             </div>
-
-            {/* TITLE */}
-
-            <input
-
-              type="text"
-
-              placeholder="
-              Property title
-              "
-
-              required
-
-              value={
-                formData.title
-              }
-
-              onChange={(e) =>
-                setFormData({
-
-                  ...formData,
-
-                  title:
-                    e.target.value,
-                })
-              }
-
-              className="
-                w-full
-                border
-                rounded-2xl
-                px-5
-                py-4
-                outline-none
-                focus:border-orange-500
-              "
-            />
-
-            {/* DESCRIPTION */}
-
-            <textarea
-
-              placeholder="
-              Property description
-              "
-
-              required
-
-              rows={5}
-
-              value={
-                formData.description
-              }
-
-              onChange={(e) =>
-                setFormData({
-
-                  ...formData,
-
-                  description:
-                    e.target.value,
-                })
-              }
-
-              className="
-                w-full
-                border
-                rounded-2xl
-                px-5
-                py-4
-                outline-none
-                focus:border-orange-500
-              "
-            />
-
-            {/* GRID */}
-
-            <div
-              className="
-                grid
-                md:grid-cols-2
-                gap-6
-              "
-            >
-
-              <input
-
-                type="text"
-
-                placeholder="
-                Location
-                "
-
-                required
-
-                value={
-                  formData.location
-                }
-
-                onChange={(e) =>
-                  setFormData({
-
-                    ...formData,
-
-                    location:
-                      e.target.value,
-                  })
-                }
-
-                className="
-                  border
-                  rounded-2xl
-                  px-5
-                  py-4
-                  outline-none
-                  focus:border-orange-500
-                "
-              />
-
-              <input
-
-                type="number"
-
-                placeholder="
-                Price
-                "
-
-                required
-
-                value={
-                  formData.price
-                }
-
-                onChange={(e) =>
-                  setFormData({
-
-                    ...formData,
-
-                    price:
-                      e.target.value,
-                  })
-                }
-
-                className="
-                  border
-                  rounded-2xl
-                  px-5
-                  py-4
-                  outline-none
-                  focus:border-orange-500
-                "
-              />
-
-              <input
-
-                type="text"
-
-                placeholder="
-                Category
-                "
-
-                required
-
-                value={
-                  formData.category
-                }
-
-                onChange={(e) =>
-                  setFormData({
-
-                    ...formData,
-
-                    category:
-                      e.target.value,
-                  })
-                }
-
-                className="
-                  border
-                  rounded-2xl
-                  px-5
-                  py-4
-                  outline-none
-                  focus:border-orange-500
-                "
-              />
-
-              <input
-
-                type="text"
-
-                placeholder="
-                Phone Number
-                "
-
-                required
-
-                value={
-                  formData.landlord_phone
-                }
-
-                onChange={(e) =>
-                  setFormData({
-
-                    ...formData,
-
-                    landlord_phone:
-                      e.target.value,
-                  })
-                }
-
-                className="
-                  border
-                  rounded-2xl
-                  px-5
-                  py-4
-                  outline-none
-                  focus:border-orange-500
-                "
-              />
-
-              <input
-
-                type="number"
-
-                placeholder="
-                Bedrooms
-                "
-
-                required
-
-                value={
-                  formData.bedrooms
-                }
-
-                onChange={(e) =>
-                  setFormData({
-
-                    ...formData,
-
-                    bedrooms:
-                      e.target.value,
-                  })
-                }
-
-                className="
-                  border
-                  rounded-2xl
-                  px-5
-                  py-4
-                  outline-none
-                  focus:border-orange-500
-                "
-              />
-
-              <input
-
-                type="number"
-
-                placeholder="
-                Bathrooms
-                "
-
-                required
-
-                value={
-                  formData.bathrooms
-                }
-
-                onChange={(e) =>
-                  setFormData({
-
-                    ...formData,
-
-                    bathrooms:
-                      e.target.value,
-                  })
-                }
-
-                className="
-                  border
-                  rounded-2xl
-                  px-5
-                  py-4
-                  outline-none
-                  focus:border-orange-500
-                "
-              />
-
-            </div>
-
-            {/* FEATURED */}
-
-            <div
-              className="
-                flex
-                items-center
-                gap-4
-              "
-            >
-
-              <input
-
-                type="checkbox"
-
-                checked={
-                  formData.featured
-                }
-
-                onChange={(e) =>
-                  setFormData({
-
-                    ...formData,
-
-                    featured:
-                      e.target.checked,
-                  })
-                }
-
-                className="
-                  w-6
-                  h-6
-                  accent-orange-500
-                "
-              />
-
-              <label
-                className="
-                  text-lg
-                  font-semibold
-                "
-              >
-
-                Mark as Featured Property
-
-              </label>
-
-            </div>
-
-            {/* BUTTON */}
-
-            <button
-
-              type="submit"
-
-              disabled={
-                submitting
-              }
-
-              className="
-                w-full
-                bg-orange-500
-                hover:bg-orange-600
-                disabled:opacity-50
-                text-white
-                py-5
-                rounded-2xl
-                font-bold
-                text-xl
-                transition
-              "
-            >
-
-              {submitting
-
-                ? "Creating Property..."
-
-                : "Create Property"}
-
-            </button>
 
           </form>
 
