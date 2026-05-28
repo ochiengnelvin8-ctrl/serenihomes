@@ -10,16 +10,16 @@ import {
 import {
   Menu,
   X,
-  Heart,
-  Bell,
+  Home,
   Building2,
+  Heart,
+  LayoutDashboard,
+  LogOut,
+  User,
 } from "lucide-react"
 
 import { supabase }
 from "@/lib/supabase"
-
-import NotificationBell
-from "@/components/NotificationBell"
 
 export default function
 Navbar() {
@@ -50,11 +50,12 @@ Navbar() {
 
   // LOGOUT
 
-  async function handleLogout() {
+  async function logout() {
 
     await supabase.auth.signOut()
 
-    window.location.href = "/"
+    window.location.href =
+      "/"
   }
 
   useEffect(() => {
@@ -65,13 +66,13 @@ Navbar() {
 
   return (
 
-    <header
+    <nav
       className="
         sticky
         top-0
         z-50
         bg-white/90
-        backdrop-blur-md
+        backdrop-blur-lg
         border-b
         border-orange-100
       "
@@ -97,9 +98,7 @@ Navbar() {
           {/* LOGO */}
 
           <Link
-
             href="/"
-
             className="
               flex
               items-center
@@ -112,12 +111,14 @@ Navbar() {
                 bg-orange-500
                 p-3
                 rounded-2xl
-                text-white
               "
             >
 
-              <Building2
+              <Home
                 size={28}
+                className="
+                  text-white
+                "
               />
 
             </div>
@@ -126,8 +127,8 @@ Navbar() {
 
               <h1
                 className="
-                  text-2xl
-                  font-extrabold
+                  text-3xl
+                  font-black
                   text-gray-900
                 "
               >
@@ -138,12 +139,12 @@ Navbar() {
 
               <p
                 className="
-                  text-sm
+                  text-xs
                   text-gray-500
                 "
               >
 
-                Find your dream home
+                Premium Rentals
 
               </p>
 
@@ -151,9 +152,9 @@ Navbar() {
 
           </Link>
 
-          {/* DESKTOP NAV */}
+          {/* DESKTOP MENU */}
 
-          <nav
+          <div
             className="
               hidden
               lg:flex
@@ -168,7 +169,6 @@ Navbar() {
 
               className="
                 font-semibold
-                text-gray-700
                 hover:text-orange-500
                 transition
               "
@@ -184,7 +184,6 @@ Navbar() {
 
               className="
                 font-semibold
-                text-gray-700
                 hover:text-orange-500
                 transition
               "
@@ -199,59 +198,48 @@ Navbar() {
               href="/favorites"
 
               className="
-                flex
-                items-center
-                gap-2
                 font-semibold
-                text-gray-700
                 hover:text-orange-500
                 transition
               "
             >
-
-              <Heart
-                size={18}
-              />
 
               Favorites
 
             </Link>
 
-            <Link
+            {user && (
 
-              href="/dashboard/bookings"
+              <Link
 
-              className="
-                font-semibold
-                text-gray-700
-                hover:text-orange-500
-                transition
-              "
-            >
+                href="/dashboard/landlord"
 
-              Bookings
+                className="
+                  font-semibold
+                  hover:text-orange-500
+                  transition
+                "
+              >
 
-            </Link>
+                Dashboard
 
-            <Link
+              </Link>
+            )}
 
-              href="/membership"
+          </div>
 
-              className="
-                font-semibold
-                text-gray-700
-                hover:text-orange-500
-                transition
-              "
-            >
+          {/* RIGHT SIDE */}
 
-              Membership
+          <div
+            className="
+              hidden
+              lg:flex
+              items-center
+              gap-4
+            "
+          >
 
-            </Link>
-
-            {/* AUTH */}
-
-            {!user && (
+            {!user ? (
 
               <>
 
@@ -260,9 +248,11 @@ Navbar() {
                   href="/login"
 
                   className="
+                    px-5
+                    py-3
+                    rounded-2xl
                     font-semibold
-                    text-gray-700
-                    hover:text-orange-500
+                    hover:bg-orange-100
                     transition
                   "
                 >
@@ -273,7 +263,7 @@ Navbar() {
 
                 <Link
 
-                  href="/register"
+                  href="/signup"
 
                   className="
                     bg-orange-500
@@ -287,64 +277,77 @@ Navbar() {
                   "
                 >
 
-                  Register
+                  Sign Up
 
                 </Link>
 
               </>
-            )}
 
-            {/* LOGGED IN */}
-
-            {user && (
+            ) : (
 
               <div
                 className="
                   flex
                   items-center
-                  gap-5
+                  gap-4
                 "
               >
 
-                <NotificationBell />
-
-                <Link
-
-                  href="/dashboard/landlord"
-
+                <div
                   className="
-                    bg-orange-500
-                    hover:bg-orange-600
-                    text-white
-                    px-6
+                    flex
+                    items-center
+                    gap-3
+                    bg-orange-50
+                    px-4
                     py-3
                     rounded-2xl
-                    font-bold
-                    transition
                   "
                 >
 
-                  Dashboard
+                  <User
+                    size={20}
+                    className="
+                      text-orange-500
+                    "
+                  />
 
-                </Link>
+                  <span
+                    className="
+                      font-medium
+                    "
+                  >
+
+                    {
+                      user.email
+                    }
+
+                  </span>
+
+                </div>
 
                 <button
 
-                  onClick={
-                    handleLogout
-                  }
+                  onClick={logout}
 
                   className="
                     bg-red-500
                     hover:bg-red-600
                     text-white
-                    px-6
+                    px-5
                     py-3
                     rounded-2xl
-                    font-bold
+                    font-semibold
+                    flex
+                    items-center
+                    gap-2
                     transition
                   "
                 >
+
+                  <LogOut
+                    size={18}
+                  />
 
                   Logout
 
@@ -353,13 +356,14 @@ Navbar() {
               </div>
             )}
 
-          </nav>
+          </div>
 
-          {/* MOBILE BUTTON */}
+          {/* MOBILE MENU BUTTON */}
 
           <button
 
             onClick={() =>
+
               setMobileMenuOpen(
                 !mobileMenuOpen
               )
@@ -367,15 +371,18 @@ Navbar() {
 
             className="
               lg:hidden
-              text-gray-700
             "
           >
 
-            {mobileMenuOpen
+            {mobileMenuOpen ? (
 
-              ? <X size={32} />
+              <X size={34} />
 
-              : <Menu size={32} />}
+            ) : (
+
+              <Menu size={34} />
+
+            )}
 
           </button>
 
@@ -390,233 +397,178 @@ Navbar() {
               lg:hidden
               mt-6
               bg-white
-              border
-              border-orange-100
               rounded-3xl
+              shadow-xl
               p-6
-              shadow-lg
+              space-y-5
             "
           >
 
-            <div
+            <Link
+
+              href="/"
+
               className="
                 flex
-                flex-col
-                gap-5
+                items-center
+                gap-3
+                font-semibold
               "
             >
 
-              <Link
+              <Home
+                size={22}
+              />
 
-                href="/"
+              Home
 
-                className="
-                  font-semibold
-                  text-gray-700
-                "
+            </Link>
 
-                onClick={() =>
-                  setMobileMenuOpen(
-                    false
-                  )
-                }
-              >
+            <Link
 
-                Home
+              href="/properties"
 
-              </Link>
+              className="
+                flex
+                items-center
+                gap-3
+                font-semibold
+              "
+            >
 
-              <Link
+              <Building2
+                size={22}
+              />
 
-                href="/properties"
+              Properties
 
-                className="
-                  font-semibold
-                  text-gray-700
-                "
+            </Link>
 
-                onClick={() =>
-                  setMobileMenuOpen(
-                    false
-                  )
-                }
-              >
+            <Link
 
-                Properties
+              href="/favorites"
 
-              </Link>
+              className="
+                flex
+                items-center
+                gap-3
+                font-semibold
+              "
+            >
 
-              <Link
+              <Heart
+                size={22}
+              />
 
-                href="/favorites"
+              Favorites
 
-                className="
-                  font-semibold
-                  text-gray-700
-                "
+            </Link>
 
-                onClick={() =>
-                  setMobileMenuOpen(
-                    false
-                  )
-                }
-              >
-
-                Favorites
-
-              </Link>
+            {user && (
 
               <Link
 
-                href="/dashboard/bookings"
+                href="/dashboard/landlord"
 
                 className="
+                  flex
+                  items-center
+                  gap-3
                   font-semibold
-                  text-gray-700
                 "
-
-                onClick={() =>
-                  setMobileMenuOpen(
-                    false
-                  )
-                }
               >
 
-                Bookings
+                <LayoutDashboard
+                  size={22}
+                />
+
+                Dashboard
 
               </Link>
+            )}
 
-              <Link
+            {!user ? (
 
-                href="/membership"
+              <div
+                className="
+                  flex
+                  flex-col
+                  gap-4
+                  pt-4
+                "
+              >
+
+                <Link
+
+                  href="/login"
+
+                  className="
+                    border
+                    text-center
+                    py-3
+                    rounded-2xl
+                    font-semibold
+                  "
+                >
+
+                  Login
+
+                </Link>
+
+                <Link
+
+                  href="/signup"
+
+                  className="
+                    bg-orange-500
+                    text-white
+                    text-center
+                    py-3
+                    rounded-2xl
+                    font-bold
+                  "
+                >
+
+                  Sign Up
+
+                </Link>
+
+              </div>
+
+            ) : (
+
+              <button
+
+                onClick={logout}
 
                 className="
+                  w-full
+                  bg-red-500
+                  text-white
+                  py-3
+                  rounded-2xl
                   font-semibold
-                  text-gray-700
+                  flex
+                  items-center
+                  justify-center
+                  gap-3
                 "
-
-                onClick={() =>
-                  setMobileMenuOpen(
-                    false
-                  )
-                }
               >
 
-                Membership
+                <LogOut
+                  size={20}
+                />
 
-              </Link>
+                Logout
 
-              {!user && (
-
-                <>
-
-                  <Link
-
-                    href="/login"
-
-                    className="
-                      font-semibold
-                      text-gray-700
-                    "
-
-                    onClick={() =>
-                      setMobileMenuOpen(
-                        false
-                      )
-                    }
-                  >
-
-                    Login
-
-                  </Link>
-
-                  <Link
-
-                    href="/register"
-
-                    className="
-                      bg-orange-500
-                      text-white
-                      px-5
-                      py-3
-                      rounded-2xl
-                      font-bold
-                      text-center
-                    "
-
-                    onClick={() =>
-                      setMobileMenuOpen(
-                        false
-                      )
-                    }
-                  >
-
-                    Register
-
-                  </Link>
-
-                </>
-              )}
-
-              {user && (
-
-                <>
-
-                  <Link
-
-                    href="/dashboard/landlord"
-
-                    className="
-                      bg-orange-500
-                      text-white
-                      px-5
-                      py-3
-                      rounded-2xl
-                      font-bold
-                      text-center
-                    "
-
-                    onClick={() =>
-                      setMobileMenuOpen(
-                        false
-                      )
-                    }
-                  >
-
-                    Dashboard
-
-                  </Link>
-
-                  <button
-
-                    onClick={
-                      handleLogout
-                    }
-
-                    className="
-                      bg-red-500
-                      text-white
-                      px-5
-                      py-3
-                      rounded-2xl
-                      font-bold
-                    "
-                  >
-
-                    Logout
-
-                  </button>
-
-                </>
-              )}
-
-            </div>
+              </button>
+            )}
 
           </div>
         )}
 
       </div>
 
-    </header>
+    </nav>
   )
 }

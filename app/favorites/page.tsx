@@ -1,48 +1,117 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import {
+  useEffect,
+  useState,
+} from "react"
 
-import Link from "next/link"
+import PropertyCard
+from "@/components/PropertyCard"
 
-import Image from "next/image"
+import { supabase }
+from "@/lib/supabase"
 
-import { supabase } from "@/lib/supabase"
+interface Favorite {
 
-interface Property {
+  id: string
 
-  id: number
+  property_id: string
 
-  title: string
+  properties: {
 
-  location: string
+    id: string
 
-  price: number
+    title: string
 
-  image_url: string
+    description: string
+
+    location: string
+
+    price: string
+
+    image_url: string
+
+    category: string
+
+    bedrooms?: number
+
+    bathrooms?: number
+
+    featured?: boolean
+  }
 }
 
-interface FavoriteProperty {
-
-  id: number
-
-  property_id: number
-
-  properties: Property[]
-}
-
-export default function FavoritesPage() {
+export default function
+FavoritesPage() {
 
   const [
     favorites,
     setFavorites,
-  ] = useState<
-    FavoriteProperty[]
-  >([])
+  ] = useState<Favorite[]>([])
 
   const [
     loading,
     setLoading,
   ] = useState(true)
+
+  async function fetchFavorites() {
+
+    try {
+
+      setLoading(true)
+
+      const {
+        data: authData,
+      } =
+        await supabase.auth.getUser()
+
+      const user =
+        authData.user
+
+      if (!user) {
+
+        setLoading(false)
+
+        return
+      }
+
+      const {
+        data,
+        error,
+      } = await supabase
+
+        .from("favorites")
+
+        .select(`
+          *,
+          properties (*)
+        `)
+
+        .eq(
+          "user_id",
+          user.id
+        )
+
+      if (error) {
+
+        console.error(error)
+
+        return
+      }
+
+      setFavorites(
+        data || []
+      )
+
+    } catch (error) {
+
+      console.error(error)
+
+    } finally {
+
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
 
@@ -50,64 +119,14 @@ export default function FavoritesPage() {
 
   }, [])
 
-  async function fetchFavorites() {
-
-    setLoading(true)
-
-    const {
-      data: { user },
-    } =
-      await supabase.auth.getUser()
-
-    if (!user) {
-
-      setLoading(false)
-
-      return
-    }
-
-    const {
-      data,
-      error,
-    } =
-      await supabase
-        .from("favorites")
-        .select(`
-          id,
-          property_id,
-          properties (
-            id,
-            title,
-            location,
-            price,
-            image_url
-          )
-        `)
-        .eq("user_id", user.id)
-
-    if (error) {
-
-      console.error(error)
-
-      setLoading(false)
-
-      return
-    }
-
-    setFavorites(
-      data as FavoriteProperty[]
-    )
-
-    setLoading(false)
-  }
-
   return (
 
     <main
       className="
         min-h-screen
         bg-orange-50
-        p-8
+        px-6
+        py-12
       "
     >
 
@@ -118,7 +137,7 @@ export default function FavoritesPage() {
         "
       >
 
-        {/* PAGE HEADER */}
+        {/* HEADER */}
 
         <div
           className="
@@ -129,13 +148,12 @@ export default function FavoritesPage() {
           <h1
             className="
               text-5xl
-              font-extrabold
-              text-orange-500
-              mb-3
+              font-black
+              mb-4
             "
           >
 
-            Saved Properties
+            My Favorites
 
           </h1>
 
@@ -146,7 +164,8 @@ export default function FavoritesPage() {
             "
           >
 
-            Your favorite homes in one place ❤️
+            Your saved dream
+            properties.
 
           </p>
 
@@ -158,20 +177,20 @@ export default function FavoritesPage() {
 
           <div
             className="
+              py-24
               text-center
-              py-20
             "
           >
 
             <h2
               className="
-                text-2xl
-                font-bold
+                text-4xl
+                font-black
                 text-orange-500
               "
             >
 
-              Loading favorites...
+              Loading...
 
             </h2>
 
@@ -187,7 +206,7 @@ export default function FavoritesPage() {
             className="
               bg-white
               rounded-3xl
-              p-12
+              p-14
               text-center
               shadow-md
             "
@@ -195,47 +214,26 @@ export default function FavoritesPage() {
 
             <h2
               className="
-                text-3xl
-                font-bold
+                text-4xl
+                font-black
                 mb-4
               "
             >
 
-              No Saved Properties
+              No favorites yet
 
             </h2>
 
             <p
               className="
-                text-gray-600
-                text-lg
-                mb-8
+                text-gray-500
               "
             >
 
-              Start saving properties you love.
+              Start saving
+              properties you love.
 
             </p>
-
-            <Link
-              href="/properties"
-
-              className="
-                inline-block
-                bg-orange-500
-                hover:bg-orange-600
-                text-white
-                px-8
-                py-4
-                rounded-2xl
-                font-bold
-                transition
-              "
-            >
-
-              Browse Properties
-
-            </Link>
 
           </div>
         )}
@@ -249,7 +247,7 @@ export default function FavoritesPage() {
             className="
               grid
               md:grid-cols-2
-              lg:grid-cols-3
+              xl:grid-cols-3
               gap-8
             "
           >
@@ -257,140 +255,59 @@ export default function FavoritesPage() {
             {favorites.map(
               (favorite) => {
 
-                // IMPORTANT FIX HERE
-
                 const property =
-                  favorite.properties?.[0]
-
-                // SAFETY CHECK
-
-                if (!property)
-                  return null
+                  favorite.properties
 
                 return (
 
-                  <Link
-                    key={favorite.id}
+                  <PropertyCard
 
-                    href={`/properties/${property.id}`}
-                  >
+                    key={
+                      property.id
+                    }
 
-                    <div
-                      className="
-                        bg-white
-                        rounded-3xl
-                        overflow-hidden
-                        shadow-md
-                        hover:shadow-2xl
-                        transition
-                        hover:-translate-y-2
-                        duration-300
-                      "
-                    >
+                    id={
+                      property.id
+                    }
 
-                      {/* IMAGE */}
+                    title={
+                      property.title
+                    }
 
-                      <div
-                        className="
-                          relative
-                          h-64
-                          w-full
-                        "
-                      >
+                    description={
+                      property.description
+                    }
 
-                        <Image
-                          src={
-                            property.image_url ||
+                    location={
+                      property.location
+                    }
 
-                            "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?q=80&w=1200&auto=format&fit=crop"
-                          }
+                    price={
+                      property.price
+                    }
 
-                          alt={property.title}
+                    image_url={
+                      property.image_url
+                    }
 
-                          fill
+                    category={
+                      property.category
+                    }
 
-                          className="
-                            object-cover
-                          "
-                        />
+                    bedrooms={
+                      property.bedrooms
+                    }
 
-                      </div>
+                    bathrooms={
+                      property.bathrooms
+                    }
 
-                      {/* CONTENT */}
+                    featured={
+                      property.featured
+                    }
 
-                      <div
-                        className="
-                          p-6
-                        "
-                      >
+                  />
 
-                        <h2
-                          className="
-                            text-2xl
-                            font-bold
-                            mb-3
-                            text-gray-800
-                          "
-                        >
-
-                          {property.title}
-
-                        </h2>
-
-                        <p
-                          className="
-                            text-gray-600
-                            mb-5
-                          "
-                        >
-
-                          📍 {property.location}
-
-                        </p>
-
-                        <div
-                          className="
-                            flex
-                            items-center
-                            justify-between
-                          "
-                        >
-
-                          <p
-                            className="
-                              text-orange-500
-                              text-3xl
-                              font-extrabold
-                            "
-                          >
-
-                            Ksh {property.price}
-
-                          </p>
-
-                          <span
-                            className="
-                              bg-orange-100
-                              text-orange-600
-                              px-4
-                              py-2
-                              rounded-full
-                              font-semibold
-                              text-sm
-                            "
-                          >
-
-                            Saved ❤️
-
-                          </span>
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                  </Link>
                 )
               }
             )}
