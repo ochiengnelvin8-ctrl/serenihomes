@@ -1,12 +1,14 @@
 "use client"
 
-import Image from "next/image"
-
 import Link from "next/link"
 
+import Image from "next/image"
+
 import {
-  BedDouble,
   Bath,
+  BedDouble,
+  Eye,
+  Heart,
   MapPin,
   Star,
 } from "lucide-react"
@@ -25,11 +27,13 @@ interface PropertyCardProps {
 
   image_url: string
 
-  category: string
+  category?: string
 
   bedrooms?: number
 
   bathrooms?: number
+
+  views?: number
 
   featured?: boolean
 }
@@ -55,6 +59,8 @@ PropertyCard({
 
   bathrooms,
 
+  views,
+
   featured,
 }: PropertyCardProps) {
 
@@ -62,6 +68,10 @@ PropertyCard({
 
     <Link
       href={`/properties/${id}`}
+      className="
+        group
+        block
+      "
     >
 
       <div
@@ -71,9 +81,11 @@ PropertyCard({
           overflow-hidden
           shadow-md
           hover:shadow-2xl
-          transition
+          transition-all
           duration-300
-          group
+          hover:-translate-y-2
+          border
+          border-orange-100
         "
       >
 
@@ -101,8 +113,21 @@ PropertyCard({
             className="
               object-cover
               group-hover:scale-110
-              transition
+              transition-transform
               duration-500
+            "
+          />
+
+          {/* OVERLAY */}
+
+          <div
+            className="
+              absolute
+              inset-0
+              bg-gradient-to-t
+              from-black/50
+              via-transparent
+              to-transparent
             "
           />
 
@@ -115,18 +140,19 @@ PropertyCard({
                 absolute
                 top-4
                 left-4
-                bg-orange-500
+                bg-gradient-to-r
+                from-yellow-400
+                to-orange-500
                 text-white
                 px-4
                 py-2
                 rounded-full
-                text-sm
                 font-bold
                 shadow-lg
-                z-10
                 flex
                 items-center
                 gap-2
+                z-20
               "
             >
 
@@ -139,24 +165,55 @@ PropertyCard({
 
           {/* CATEGORY */}
 
-          <div
+          {category && (
+
+            <div
+              className="
+                absolute
+                bottom-4
+                left-4
+                bg-white/90
+                backdrop-blur-md
+                text-gray-900
+                px-4
+                py-2
+                rounded-full
+                text-sm
+                font-bold
+                shadow-md
+              "
+            >
+
+              {category}
+
+            </div>
+          )}
+
+          {/* FAVORITE */}
+
+          <button
             className="
               absolute
-              bottom-4
-              left-4
+              top-4
+              right-4
               bg-white/90
-              backdrop-blur-md
-              px-4
-              py-2
+              hover:bg-white
+              p-3
               rounded-full
-              text-sm
-              font-semibold
+              shadow-lg
+              transition
+              z-20
             "
           >
 
-            {category}
+            <Heart
+              size={20}
+              className="
+                text-red-500
+              "
+            />
 
-          </div>
+          </button>
 
         </div>
 
@@ -164,24 +221,70 @@ PropertyCard({
 
         <div
           className="
-            p-6
+            p-7
           "
         >
 
           {/* TITLE */}
 
-          <h2
+          <div
             className="
-              text-2xl
-              font-bold
-              mb-3
-              line-clamp-1
+              flex
+              items-start
+              justify-between
+              gap-4
+              mb-4
             "
           >
 
-            {title}
+            <h2
+              className="
+                text-2xl
+                font-black
+                text-gray-900
+                line-clamp-1
+                group-hover:text-orange-500
+                transition
+              "
+            >
 
-          </h2>
+              {title}
+
+            </h2>
+
+            <div
+              className="
+                text-right
+                shrink-0
+              "
+            >
+
+              <h3
+                className="
+                  text-2xl
+                  font-black
+                  text-orange-500
+                "
+              >
+
+                Ksh {price}
+
+              </h3>
+
+              <span
+                className="
+                  text-gray-500
+                  text-sm
+                "
+              >
+
+                / month
+
+              </span>
+
+            </div>
+
+          </div>
 
           {/* LOCATION */}
 
@@ -191,13 +294,19 @@ PropertyCard({
               items-center
               gap-2
               text-gray-500
-              mb-4
+              mb-5
             "
           >
 
-            <MapPin size={18} />
+            <MapPin
+              size={18}
+            />
 
-            <span>
+            <span
+              className="
+                line-clamp-1
+              "
+            >
 
               {location}
 
@@ -210,8 +319,9 @@ PropertyCard({
           <p
             className="
               text-gray-600
-              line-clamp-2
+              leading-relaxed
               mb-6
+              line-clamp-2
             "
           >
 
@@ -224,113 +334,92 @@ PropertyCard({
           <div
             className="
               flex
+              flex-wrap
               items-center
-              gap-6
-              mb-6
-            "
-          >
-
-            {bedrooms && (
-
-              <div
-                className="
-                  flex
-                  items-center
-                  gap-2
-                  text-gray-600
-                "
-              >
-
-                <BedDouble
-                  size={18}
-                />
-
-                <span>
-
-                  {bedrooms} Beds
-
-                </span>
-
-              </div>
-            )}
-
-            {bathrooms && (
-
-              <div
-                className="
-                  flex
-                  items-center
-                  gap-2
-                  text-gray-600
-                "
-              >
-
-                <Bath size={18} />
-
-                <span>
-
-                  {bathrooms} Baths
-
-                </span>
-
-              </div>
-            )}
-
-          </div>
-
-          {/* PRICE */}
-
-          <div
-            className="
-              flex
               justify-between
-              items-center
+              gap-4
+              pt-5
+              border-t
             "
           >
 
-            <div>
-
-              <span
-                className="
-                  text-3xl
-                  font-black
-                  text-orange-500
-                "
-              >
-
-                Ksh {price}
-
-              </span>
-
-              <span
-                className="
-                  text-gray-500
-                  ml-1
-                "
-              >
-
-                / month
-
-              </span>
-
-            </div>
-
-            <button
+            <div
               className="
-                bg-orange-500
-                hover:bg-orange-600
-                text-white
-                px-5
-                py-3
-                rounded-2xl
-                font-semibold
-                transition
+                flex
+                items-center
+                gap-5
               "
             >
 
-              View
+              {bedrooms !== undefined && (
 
-            </button>
+                <div
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                    text-gray-700
+                    font-medium
+                  "
+                >
+
+                  <BedDouble
+                    size={20}
+                    className="
+                      text-orange-500
+                    "
+                  />
+
+                  {bedrooms}
+
+                </div>
+              )}
+
+              {bathrooms !== undefined && (
+
+                <div
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                    text-gray-700
+                    font-medium
+                  "
+                >
+
+                  <Bath
+                    size={20}
+                    className="
+                      text-orange-500
+                    "
+                  />
+
+                  {bathrooms}
+
+                </div>
+              )}
+
+            </div>
+
+            {/* VIEWS */}
+
+            <div
+              className="
+                flex
+                items-center
+                gap-2
+                text-gray-500
+                font-medium
+              "
+            >
+
+              <Eye
+                size={18}
+              />
+
+              {views || 0}
+
+            </div>
 
           </div>
 

@@ -1,31 +1,28 @@
 "use client"
 
+import Link from "next/link"
+
 import {
   useEffect,
   useState,
 } from "react"
 
-import Image from "next/image"
-
 import {
-  Home,
+  Building2,
+  Eye,
+  Heart,
+  MapPin,
+  Pencil,
   Plus,
   Trash2,
-  Eye,
-  Star,
-  Pencil,
-  X,
-  BarChart3,
+  Crown,
 } from "lucide-react"
 
 import { supabase }
 from "@/lib/supabase"
 
-import ImageUpload
-from "@/components/ImageUpload"
-
-import MultiImageUpload
-from "@/components/MultiImageUpload"
+import BoostListingButton
+from "@/components/BoostListingButton"
 
 interface Property {
 
@@ -43,13 +40,11 @@ interface Property {
 
   category: string
 
-  bedrooms?: number
-
-  bathrooms?: number
+  featured?: boolean
 
   views?: number
 
-  featured?: boolean
+  created_at?: string
 }
 
 export default function
@@ -66,103 +61,9 @@ LandlordDashboardPage() {
   ] = useState(true)
 
   const [
-    submitting,
-    setSubmitting,
-  ] = useState(false)
-
-  const [
-    userId,
-    setUserId,
-  ] = useState("")
-
-  // ANALYTICS
-
-  const [
     totalViews,
     setTotalViews,
   ] = useState(0)
-
-  const [
-    featuredCount,
-    setFeaturedCount,
-  ] = useState(0)
-
-  const [
-    averagePrice,
-    setAveragePrice,
-  ] = useState(0)
-
-  // MAIN IMAGE
-
-  const [
-    imageUrl,
-    setImageUrl,
-  ] = useState("")
-
-  // GALLERY IMAGES
-
-  const [
-    galleryImages,
-    setGalleryImages,
-  ] = useState<string[]>([])
-
-  // EDIT STATES
-
-  const [
-    editingProperty,
-    setEditingProperty,
-  ] = useState<Property | null>(
-    null
-  )
-
-  const [
-    editImageUrl,
-    setEditImageUrl,
-  ] = useState("")
-
-  // FORM STATE
-
-  const [
-    formData,
-    setFormData,
-  ] = useState({
-
-      title: "",
-
-      description: "",
-
-      location: "",
-
-      price: "",
-
-      category: "",
-
-      bedrooms: "",
-
-      bathrooms: "",
-
-      landlord_phone: "",
-
-      featured: false,
-    }
-  )
-
-  // FETCH USER
-
-  async function fetchUser() {
-
-    const {
-      data,
-    } =
-      await supabase.auth.getUser()
-
-    if (data.user) {
-
-      setUserId(
-        data.user.id
-      )
-    }
-  }
 
   // FETCH PROPERTIES
 
@@ -173,6 +74,17 @@ LandlordDashboardPage() {
       setLoading(true)
 
       const {
+        data: authData,
+      } =
+        await supabase.auth.getUser()
+
+      const user =
+        authData.user
+
+      if (!user)
+        return
+
+      const {
         data,
         error,
       } = await supabase
@@ -180,6 +92,11 @@ LandlordDashboardPage() {
         .from("properties")
 
         .select("*")
+
+        .eq(
+          "user_id",
+          user.id
+        )
 
         .order(
           "created_at",
@@ -195,79 +112,46 @@ LandlordDashboardPage() {
         return
       }
 
-      const propertiesData =
-        data || []
+      const sorted =
+        (data || []).sort(
 
-      setProperties(
-        propertiesData
-      )
+          (a, b) => {
+
+            if (
+              a.featured &&
+              !b.featured
+            ) return -1
+
+            if (
+              !a.featured &&
+              b.featured
+            ) return 1
+
+            return 0
+          }
+        )
+
+      setProperties(sorted)
 
       // TOTAL VIEWS
 
-      const views =
-        propertiesData.reduce(
+      const total =
+        sorted.reduce(
 
           (
-            sum,
+            acc,
             property
           ) =>
 
-            sum +
-            (property.views || 0),
-
-          0
-        )
-
-      setTotalViews(
-        views
-      )
-
-      // FEATURED COUNT
-
-      const featured =
-        propertiesData.filter(
-          (property) =>
-            property.featured
-        ).length
-
-      setFeaturedCount(
-        featured
-      )
-
-      // AVERAGE PRICE
-
-      const totalPrice =
-        propertiesData.reduce(
-
-          (
-            sum,
-            property
-          ) =>
-
-            sum +
-            Number(
-              property.price || 0
+            acc +
+            (
+              property.views || 0
             ),
 
           0
         )
 
-      const average =
-
-        propertiesData.length > 0
-
-          ? Math.round(
-
-              totalPrice /
-
-              propertiesData.length
-            )
-
-          : 0
-
-      setAveragePrice(
-        average
-      )
+      setTotalViews(total)
 
     } catch (error) {
 
@@ -279,261 +163,18 @@ LandlordDashboardPage() {
     }
   }
 
-  // CREATE PROPERTY
-
-  async function createProperty(
-    e: React.FormEvent
-  ) {
-
-    e.preventDefault()
-
-    try {
-
-      setSubmitting(true)
-
-      const {
-
-        data: propertyData,
-
-        error,
-
-      } = await supabase
-
-        .from("properties")
-
-        .insert({
-
-          user_id:
-            userId,
-
-          title:
-            formData.title,
-
-          description:
-            formData.description,
-
-          location:
-            formData.location,
-
-          price:
-            formData.price,
-
-          category:
-            formData.category,
-
-          bedrooms:
-            Number(
-              formData.bedrooms
-            ),
-
-          bathrooms:
-            Number(
-              formData.bathrooms
-            ),
-
-          landlord_phone:
-            formData.landlord_phone,
-
-          image_url:
-            imageUrl,
-
-          views: 0,
-
-          featured:
-            formData.featured,
-        })
-
-        .select()
-
-        .single()
-
-      if (error) {
-
-        console.error(error)
-
-        alert(
-          "Failed to create property"
-        )
-
-        return
-      }
-
-      // SAVE GALLERY IMAGES
-
-      if (
-        propertyData &&
-        galleryImages.length > 0
-      ) {
-
-        const galleryInsert =
-
-          galleryImages.map(
-            (image) => ({
-
-              property_id:
-                propertyData.id,
-
-              image_url:
-                image,
-            })
-          )
-
-        await supabase
-
-          .from(
-            "property_images"
-          )
-
-          .insert(
-            galleryInsert
-          )
-      }
-
-      // RESET FORM
-
-      setFormData({
-
-        title: "",
-
-        description: "",
-
-        location: "",
-
-        price: "",
-
-        category: "",
-
-        bedrooms: "",
-
-        bathrooms: "",
-
-        landlord_phone: "",
-
-        featured: false,
-      })
-
-      setImageUrl("")
-
-      setGalleryImages([])
-
-      fetchProperties()
-
-      alert(
-        "Property created successfully"
-      )
-
-    } catch (error) {
-
-      console.error(error)
-
-    } finally {
-
-      setSubmitting(false)
-    }
-  }
-
-  // UPDATE PROPERTY
-
-  async function updateProperty(
-    e: React.FormEvent
-  ) {
-
-    e.preventDefault()
-
-    if (!editingProperty)
-      return
-
-    try {
-
-      setSubmitting(true)
-
-      const {
-        error,
-      } = await supabase
-
-        .from("properties")
-
-        .update({
-
-          title:
-            editingProperty.title,
-
-          description:
-            editingProperty.description,
-
-          location:
-            editingProperty.location,
-
-          price:
-            editingProperty.price,
-
-          category:
-            editingProperty.category,
-
-          bedrooms:
-            editingProperty.bedrooms,
-
-          bathrooms:
-            editingProperty.bathrooms,
-
-          image_url:
-            editImageUrl ||
-            editingProperty.image_url,
-
-          featured:
-            editingProperty.featured,
-        })
-
-        .eq(
-          "id",
-          editingProperty.id
-        )
-
-      if (error) {
-
-        console.error(error)
-
-        alert(
-          "Failed to update property"
-        )
-
-        return
-      }
-
-      alert(
-        "Property updated successfully"
-      )
-
-      setEditingProperty(
-        null
-      )
-
-      setEditImageUrl("")
-
-      fetchProperties()
-
-    } catch (error) {
-
-      console.error(error)
-
-    } finally {
-
-      setSubmitting(false)
-    }
-  }
-
   // DELETE PROPERTY
 
   async function deleteProperty(
     id: string
   ) {
 
-    const confirmDelete =
+    const confirmed =
       confirm(
         "Delete this property?"
       )
 
-    if (!confirmDelete)
+    if (!confirmed)
       return
 
     try {
@@ -565,8 +206,6 @@ LandlordDashboardPage() {
 
   useEffect(() => {
 
-    fetchUser()
-
     fetchProperties()
 
   }, [])
@@ -578,7 +217,7 @@ LandlordDashboardPage() {
         min-h-screen
         bg-orange-50
         px-6
-        py-10
+        py-12
       "
     >
 
@@ -598,8 +237,8 @@ LandlordDashboardPage() {
             lg:flex-row
             lg:items-center
             lg:justify-between
-            gap-5
-            mb-10
+            gap-6
+            mb-12
           "
         >
 
@@ -608,7 +247,7 @@ LandlordDashboardPage() {
             <h1
               className="
                 text-5xl
-                font-extrabold
+                font-black
                 mb-3
               "
             >
@@ -624,82 +263,53 @@ LandlordDashboardPage() {
               "
             >
 
-              Manage your
-              property listings
+              Manage your listings,
+              bookings & analytics
 
             </p>
 
           </div>
 
-          <div
+          <Link
+
+            href="/dashboard/add-property"
+
             className="
-              bg-white
-              rounded-3xl
+              bg-orange-500
+              hover:bg-orange-600
+              text-white
               px-8
               py-5
-              shadow-md
+              rounded-2xl
+              font-bold
+              flex
+              items-center
+              gap-3
+              transition
+              shadow-lg
             "
           >
 
-            <div
-              className="
-                flex
-                items-center
-                gap-4
-              "
-            >
+            <Plus size={24} />
 
-              <BarChart3
-                size={38}
-                className="
-                  text-orange-500
-                "
-              />
+            Add Property
 
-              <div>
-
-                <p
-                  className="
-                    text-gray-500
-                  "
-                >
-
-                  Total Views
-
-                </p>
-
-                <h2
-                  className="
-                    text-4xl
-                    font-extrabold
-                  "
-                >
-
-                  {totalViews}
-
-                </h2>
-
-              </div>
-
-            </div>
-
-          </div>
+          </Link>
 
         </div>
 
-        {/* ANALYTICS */}
+        {/* STATS */}
 
         <div
           className="
             grid
-            md:grid-cols-2
-            xl:grid-cols-4
+            md:grid-cols-3
             gap-6
             mb-12
           "
         >
 
-          {/* TOTAL LISTINGS */}
+          {/* TOTAL PROPERTIES */}
 
           <div
             className="
@@ -710,27 +320,58 @@ LandlordDashboardPage() {
             "
           >
 
-            <p
+            <div
               className="
-                text-gray-500
-                mb-3
+                flex
+                items-center
+                justify-between
+                mb-5
               "
             >
 
-              Total Listings
+              <div
+                className="
+                  bg-orange-100
+                  p-4
+                  rounded-2xl
+                "
+              >
 
-            </p>
+                <Building2
+                  size={32}
+                  className="
+                    text-orange-500
+                  "
+                />
+
+              </div>
+
+            </div>
 
             <h2
               className="
                 text-5xl
                 font-black
+                mb-2
               "
             >
 
-              {properties.length}
+              {
+                properties.length
+              }
 
             </h2>
+
+            <p
+              className="
+                text-gray-500
+                font-medium
+              "
+            >
+
+              Total Properties
+
+            </p>
 
           </div>
 
@@ -745,27 +386,56 @@ LandlordDashboardPage() {
             "
           >
 
-            <p
+            <div
               className="
-                text-gray-500
-                mb-3
+                flex
+                items-center
+                justify-between
+                mb-5
               "
             >
 
-              Total Views
+              <div
+                className="
+                  bg-blue-100
+                  p-4
+                  rounded-2xl
+                "
+              >
 
-            </p>
+                <Eye
+                  size={32}
+                  className="
+                    text-blue-500
+                  "
+                />
+
+              </div>
+
+            </div>
 
             <h2
               className="
                 text-5xl
                 font-black
+                mb-2
               "
             >
 
               {totalViews}
 
             </h2>
+
+            <p
+              className="
+                text-gray-500
+                font-medium
+              "
+            >
+
+              Property Views
+
+            </p>
 
           </div>
 
@@ -780,10 +450,59 @@ LandlordDashboardPage() {
             "
           >
 
+            <div
+              className="
+                flex
+                items-center
+                justify-between
+                mb-5
+              "
+            >
+
+              <div
+                className="
+                  bg-yellow-100
+                  p-4
+                  rounded-2xl
+                "
+              >
+
+                <Crown
+                  size={32}
+                  className="
+                    text-yellow-500
+                  "
+                />
+
+              </div>
+
+            </div>
+
+            <h2
+              className="
+                text-5xl
+                font-black
+                mb-2
+              "
+            >
+
+              {
+
+                properties.filter(
+                  (
+                    property
+                  ) =>
+
+                    property.featured
+                ).length
+              }
+
+            </h2>
+
             <p
               className="
                 text-gray-500
-                mb-3
+                font-medium
               "
             >
 
@@ -791,156 +510,440 @@ LandlordDashboardPage() {
 
             </p>
 
-            <h2
-              className="
-                text-5xl
-                font-black
-                text-orange-500
-              "
-            >
-
-              {featuredCount}
-
-            </h2>
-
-          </div>
-
-          {/* AVG PRICE */}
-
-          <div
-            className="
-              bg-white
-              rounded-3xl
-              p-8
-              shadow-md
-            "
-          >
-
-            <p
-              className="
-                text-gray-500
-                mb-3
-              "
-            >
-
-              Average Price
-
-            </p>
-
-            <h2
-              className="
-                text-4xl
-                font-black
-              "
-            >
-
-              Ksh {averagePrice}
-
-            </h2>
-
           </div>
 
         </div>
 
-        {/* CREATE PROPERTY */}
+        {/* PROPERTIES */}
 
         <div
           className="
             bg-white
             rounded-3xl
             shadow-md
-            p-8
-            mb-12
+            overflow-hidden
           "
         >
 
           <div
             className="
-              flex
-              items-center
-              gap-3
-              mb-8
+              p-8
+              border-b
             "
           >
-
-            <Plus
-              size={32}
-              className="
-                text-orange-500
-              "
-            />
 
             <h2
               className="
                 text-3xl
-                font-bold
+                font-black
               "
             >
 
-              Add New Property
+              Your Properties
 
             </h2>
 
           </div>
 
-          <form
+          {loading ? (
 
-            onSubmit={
-              createProperty
-            }
-
-            className="
-              space-y-7
-            "
-          >
-
-            <div>
+            <div
+              className="
+                p-20
+                text-center
+              "
+            >
 
               <h3
                 className="
-                  text-2xl
-                  font-bold
+                  text-3xl
+                  font-black
+                  text-orange-500
+                "
+              >
+
+                Loading...
+
+              </h3>
+
+            </div>
+
+          ) : properties.length === 0 ? (
+
+            <div
+              className="
+                p-20
+                text-center
+              "
+            >
+
+              <h3
+                className="
+                  text-3xl
+                  font-black
                   mb-4
                 "
               >
 
-                Main Property Image
+                No Properties Yet
 
               </h3>
 
-              <ImageUpload
-                onUpload={
-                  setImageUrl
-                }
-              />
-
-            </div>
-
-            <div>
-
-              <h3
+              <p
                 className="
-                  text-2xl
-                  font-bold
-                  mb-4
+                  text-gray-500
+                  mb-8
                 "
               >
 
-                Property Gallery
+                Start by creating
+                your first listing
 
-              </h3>
+              </p>
 
-              <MultiImageUpload
+              <Link
 
-                onUploadComplete={
-                  setGalleryImages
-                }
+                href="/dashboard/add-property"
 
-              />
+                className="
+                  inline-flex
+                  items-center
+                  gap-3
+                  bg-orange-500
+                  text-white
+                  px-8
+                  py-4
+                  rounded-2xl
+                  font-bold
+                "
+              >
+
+                <Plus size={22} />
+
+                Add Property
+
+              </Link>
 
             </div>
 
-          </form>
+          ) : (
+
+            <div
+              className="
+                divide-y
+              "
+            >
+
+              {properties.map(
+                (property) => (
+
+                  <div
+
+                    key={
+                      property.id
+                    }
+
+                    className="
+                      p-8
+                      hover:bg-orange-50
+                      transition
+                    "
+                  >
+
+                    <div
+                      className="
+                        flex
+                        flex-col
+                        xl:flex-row
+                        xl:items-center
+                        xl:justify-between
+                        gap-8
+                      "
+                    >
+
+                      {/* LEFT */}
+
+                      <div
+                        className="
+                          flex
+                          gap-6
+                        "
+                      >
+
+                        <img
+
+                          src={
+                            property.image_url
+                          }
+
+                          alt={
+                            property.title
+                          }
+
+                          className="
+                            w-44
+                            h-32
+                            object-cover
+                            rounded-2xl
+                          "
+                        />
+
+                        <div>
+
+                          <div
+                            className="
+                              flex
+                              items-center
+                              gap-3
+                              flex-wrap
+                              mb-3
+                            "
+                          >
+
+                            <h3
+                              className="
+                                text-3xl
+                                font-black
+                              "
+                            >
+
+                              {
+                                property.title
+                              }
+
+                            </h3>
+
+                            {property.featured && (
+
+                              <span
+                                className="
+                                  bg-gradient-to-r
+                                  from-yellow-400
+                                  to-orange-500
+                                  text-white
+                                  px-4
+                                  py-2
+                                  rounded-full
+                                  text-sm
+                                  font-bold
+                                  shadow-md
+                                "
+                              >
+
+                                Featured
+
+                              </span>
+                            )}
+
+                          </div>
+
+                          <div
+                            className="
+                              flex
+                              items-center
+                              gap-2
+                              text-gray-500
+                              mb-4
+                            "
+                          >
+
+                            <MapPin
+                              size={18}
+                            />
+
+                            {
+                              property.location
+                            }
+
+                          </div>
+
+                          <p
+                            className="
+                              text-gray-600
+                              max-w-2xl
+                              mb-5
+                              line-clamp-2
+                            "
+                          >
+
+                            {
+                              property.description
+                            }
+
+                          </p>
+
+                          <div
+                            className="
+                              flex
+                              flex-wrap
+                              items-center
+                              gap-6
+                            "
+                          >
+
+                            <div
+                              className="
+                                flex
+                                items-center
+                                gap-2
+                                text-orange-500
+                                font-bold
+                              "
+                            >
+
+                              <Eye
+                                size={20}
+                              />
+
+                              {
+                                property.views || 0
+                              }
+                              views
+
+                            </div>
+
+                            <div
+                              className="
+                                flex
+                                items-center
+                                gap-2
+                                text-pink-500
+                                font-bold
+                              "
+                            >
+
+                              <Heart
+                                size={20}
+                              />
+
+                              Popular
+
+                            </div>
+
+                            <div
+                              className="
+                                text-3xl
+                                font-black
+                              "
+                            >
+
+                              Ksh {
+                                property.price
+                              }
+
+                            </div>
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                      {/* ACTIONS */}
+
+                      <div
+                        className="
+                          flex
+                          flex-wrap
+                          items-center
+                          gap-4
+                        "
+                      >
+
+                        <Link
+
+                          href={`/properties/${property.id}`}
+
+                          className="
+                            bg-gray-100
+                            hover:bg-gray-200
+                            px-5
+                            py-4
+                            rounded-2xl
+                            font-semibold
+                            transition
+                          "
+                        >
+
+                          View
+
+                        </Link>
+
+                        <Link
+
+                          href={`/dashboard/edit-property/${property.id}`}
+
+                          className="
+                            bg-blue-500
+                            hover:bg-blue-600
+                            text-white
+                            px-5
+                            py-4
+                            rounded-2xl
+                            font-semibold
+                            flex
+                            items-center
+                            gap-2
+                            transition
+                          "
+                        >
+
+                          <Pencil
+                            size={18}
+                          />
+
+                          Edit
+
+                        </Link>
+
+                        <button
+
+                          onClick={() =>
+
+                            deleteProperty(
+                              property.id
+                            )
+                          }
+
+                          className="
+                            bg-red-500
+                            hover:bg-red-600
+                            text-white
+                            px-5
+                            py-4
+                            rounded-2xl
+                            font-semibold
+                            flex
+                            items-center
+                            gap-2
+                            transition
+                          "
+                        >
+
+                          <Trash2
+                            size={18}
+                          />
+
+                          Delete
+
+                        </button>
+
+                        <BoostListingButton
+                          propertyId={
+                            property.id
+                          }
+                        />
+
+                      </div>
+
+                    </div>
+
+                  </div>
+                )
+              )}
+
+            </div>
+          )}
 
         </div>
 

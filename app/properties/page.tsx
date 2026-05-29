@@ -2,14 +2,24 @@
 
 import {
   useEffect,
+  useMemo,
   useState,
 } from "react"
+
+import {
+  Building2,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react"
+
+import { supabase }
+from "@/lib/supabase"
 
 import PropertyCard
 from "@/components/PropertyCard"
 
-import { supabase }
-from "@/lib/supabase"
+import AdvancedFilters
+from "@/components/AdvancedFilters"
 
 interface Property {
 
@@ -25,15 +35,15 @@ interface Property {
 
   image_url: string
 
-  category: string
+  category?: string
 
   bedrooms?: number
 
   bathrooms?: number
 
-  featured?: boolean
+  views?: number
 
-  created_at?: string
+  featured?: boolean
 }
 
 export default function
@@ -45,16 +55,24 @@ PropertiesPage() {
   ] = useState<Property[]>([])
 
   const [
+    filteredProperties,
+    setFilteredProperties,
+  ] = useState<Property[]>([])
+
+  const [
     loading,
     setLoading,
   ] = useState(true)
 
-  // SEARCH STATES
+  const [
+    search,
+    setSearch,
+  ] = useState("")
 
   const [
-    searchTerm,
-    setSearchTerm,
-  ] = useState("")
+    showFilters,
+    setShowFilters,
+  ] = useState(false)
 
   const [
     selectedCategory,
@@ -72,9 +90,9 @@ PropertiesPage() {
   ] = useState("")
 
   const [
-    sortOption,
-    setSortOption,
-  ] = useState("newest")
+    bedrooms,
+    setBedrooms,
+  ] = useState("")
 
   // FETCH PROPERTIES
 
@@ -84,114 +102,21 @@ PropertiesPage() {
 
       setLoading(true)
 
-      let query =
-        supabase
-
-          .from("properties")
-
-          .select("*")
-
-      // SEARCH
-
-      if (searchTerm) {
-
-        query = query.or(
-
-          `title.ilike.%${searchTerm}%,
-
-          location.ilike.%${searchTerm}%,
-
-          description.ilike.%${searchTerm}%`
-        )
-      }
-
-      // CATEGORY
-
-      if (
-        selectedCategory &&
-        selectedCategory !== "All"
-      ) {
-
-        query = query.eq(
-
-          "category",
-
-          selectedCategory
-        )
-      }
-
-      // MIN PRICE
-
-      if (minPrice) {
-
-        query = query.gte(
-
-          "price",
-
-          Number(minPrice)
-        )
-      }
-
-      // MAX PRICE
-
-      if (maxPrice) {
-
-        query = query.lte(
-
-          "price",
-
-          Number(maxPrice)
-        )
-      }
-
-      // SORTING
-
-      if (
-        sortOption === "newest"
-      ) {
-
-        query = query.order(
-
-          "created_at",
-
-          {
-            ascending: false,
-          }
-        )
-      }
-
-      if (
-        sortOption === "cheapest"
-      ) {
-
-        query = query.order(
-
-          "price",
-
-          {
-            ascending: true,
-          }
-        )
-      }
-
-      if (
-        sortOption === "expensive"
-      ) {
-
-        query = query.order(
-
-          "price",
-
-          {
-            ascending: false,
-          }
-        )
-      }
-
       const {
         data,
         error,
-      } = await query
+      } = await supabase
+
+        .from("properties")
+
+        .select("*")
+
+        .order(
+          "created_at",
+          {
+            ascending: false,
+          }
+        )
 
       if (error) {
 
@@ -200,8 +125,37 @@ PropertiesPage() {
         return
       }
 
-      setProperties(
-        data || []
+      const sorted =
+        (data || []).sort(
+
+          (a, b) => {
+
+            // FEATURED FIRST
+
+            if (
+              a.featured &&
+              !b.featured
+            ) return -1
+
+            if (
+              !a.featured &&
+              b.featured
+            ) return 1
+
+            // MOST VIEWED SECOND
+
+            return (
+              (b.views || 0)
+              -
+              (a.views || 0)
+            )
+          }
+        )
+
+      setProperties(sorted)
+
+      setFilteredProperties(
+        sorted
       )
 
     } catch (error) {
@@ -214,15 +168,162 @@ PropertiesPage() {
     }
   }
 
-  // AUTO REFRESH
-
   useEffect(() => {
 
     fetchProperties()
 
+  }, [])
+
+  // FILTERS
+
+  useEffect(() => {
+
+    let filtered =
+      [...properties]
+
+    // SEARCH
+
+    if (search) {
+
+      filtered =
+        filtered.filter(
+
+          (
+            property
+          ) =>
+
+            property.title
+              .toLowerCase()
+
+              .includes(
+                search.toLowerCase()
+              )
+
+            ||
+
+            property.location
+              .toLowerCase()
+
+              .includes(
+                search.toLowerCase()
+              )
+
+            ||
+
+            property.description
+              .toLowerCase()
+
+              .includes(
+                search.toLowerCase()
+              )
+        )
+    }
+
+    // CATEGORY
+
+    if (
+      selectedCategory !==
+      "All"
+    ) {
+
+      filtered =
+        filtered.filter(
+
+          (
+            property
+          ) =>
+
+            property.category ===
+            selectedCategory
+        )
+    }
+
+    // MIN PRICE
+
+    if (minPrice) {
+
+      filtered =
+        filtered.filter(
+
+          (
+            property
+          ) =>
+
+            Number(
+              property.price
+            ) >=
+            Number(minPrice)
+        )
+    }
+
+    // MAX PRICE
+
+    if (maxPrice) {
+
+      filtered =
+        filtered.filter(
+
+          (
+            property
+          ) =>
+
+            Number(
+              property.price
+            ) <=
+            Number(maxPrice)
+        )
+    }
+
+    // BEDROOMS
+
+    if (bedrooms) {
+
+      filtered =
+        filtered.filter(
+
+          (
+            property
+          ) =>
+
+            Number(
+              property.bedrooms
+            ) >=
+            Number(bedrooms)
+        )
+    }
+
+    // SORT AGAIN
+
+    const sorted =
+      [...filtered].sort(
+
+        (a, b) => {
+
+          if (
+            a.featured &&
+            !b.featured
+          ) return -1
+
+          if (
+            !a.featured &&
+            b.featured
+          ) return 1
+
+          return (
+            (b.views || 0)
+            -
+            (a.views || 0)
+          )
+        }
+      )
+
+    setFilteredProperties(
+      sorted
+    )
+
   }, [
 
-    searchTerm,
+    search,
 
     selectedCategory,
 
@@ -230,8 +331,35 @@ PropertiesPage() {
 
     maxPrice,
 
-    sortOption,
+    bedrooms,
+
+    properties,
   ])
+
+  // CATEGORIES
+
+  const categories =
+    useMemo(() => {
+
+      const all =
+        properties.map(
+          (
+            property
+          ) =>
+
+            property.category
+        )
+
+      return [
+
+        "All",
+
+        ...new Set(
+          all.filter(Boolean)
+        ),
+      ]
+
+    }, [properties])
 
   return (
 
@@ -239,384 +367,453 @@ PropertiesPage() {
       className="
         min-h-screen
         bg-orange-50
-        px-6
-        py-12
       "
     >
 
-      <div
+      {/* HERO */}
+
+      <section
         className="
-          max-w-7xl
-          mx-auto
+          bg-gradient-to-r
+          from-orange-500
+          to-yellow-500
+          text-white
+          py-24
+          px-6
         "
       >
 
-        {/* HEADER */}
-
         <div
           className="
-            mb-10
+            max-w-7xl
+            mx-auto
           "
         >
 
-          <h1
+          <div
             className="
-              text-5xl
-              font-black
-              mb-4
+              flex
+              items-center
+              gap-4
+              mb-6
             "
           >
 
-            Explore Properties
+            <Building2
+              size={42}
+            />
 
-          </h1>
+            <h1
+              className="
+                text-6xl
+                font-black
+              "
+            >
+
+              Discover Properties
+
+            </h1>
+
+          </div>
 
           <p
             className="
-              text-gray-600
-              text-lg
+              text-2xl
+              max-w-3xl
+              text-white/90
             "
           >
 
-            Find your perfect
-            home with advanced
-            search and filters.
+            Browse premium rental
+            apartments, bedsitters,
+            studios and houses across
+            Kenya.
 
           </p>
 
         </div>
 
-        {/* FILTERS */}
+      </section>
+
+      {/* SEARCH + FILTERS */}
+
+      <section
+        className="
+          px-6
+          -mt-10
+          relative
+          z-20
+        "
+      >
 
         <div
           className="
+            max-w-7xl
+            mx-auto
             bg-white
             rounded-3xl
-            p-8
-            shadow-md
-            mb-10
+            shadow-2xl
+            p-6
           "
         >
 
-          <div
-            className="
-              grid
-              md:grid-cols-2
-              xl:grid-cols-5
-              gap-5
-            "
-          >
-
-            {/* SEARCH */}
-
-            <input
-
-              type="text"
-
-              placeholder="
-                Search properties...
-              "
-
-              value={searchTerm}
-
-              onChange={(e) =>
-
-                setSearchTerm(
-                  e.target.value
-                )
-              }
-
-              className="
-                border
-                rounded-2xl
-                px-5
-                py-4
-                outline-none
-              "
-            />
-
-            {/* CATEGORY */}
-
-            <select
-
-              value={
-                selectedCategory
-              }
-
-              onChange={(e) =>
-
-                setSelectedCategory(
-                  e.target.value
-                )
-              }
-
-              className="
-                border
-                rounded-2xl
-                px-5
-                py-4
-                outline-none
-              "
-            >
-
-              <option>
-                All
-              </option>
-
-              <option>
-                Apartment
-              </option>
-
-              <option>
-                Bedsitter
-              </option>
-
-              <option>
-                Hostel
-              </option>
-
-              <option>
-                Mansion
-              </option>
-
-            </select>
-
-            {/* MIN PRICE */}
-
-            <input
-
-              type="number"
-
-              placeholder="
-                Min price
-              "
-
-              value={minPrice}
-
-              onChange={(e) =>
-
-                setMinPrice(
-                  e.target.value
-                )
-              }
-
-              className="
-                border
-                rounded-2xl
-                px-5
-                py-4
-                outline-none
-              "
-            />
-
-            {/* MAX PRICE */}
-
-            <input
-
-              type="number"
-
-              placeholder="
-                Max price
-              "
-
-              value={maxPrice}
-
-              onChange={(e) =>
-
-                setMaxPrice(
-                  e.target.value
-                )
-              }
-
-              className="
-                border
-                rounded-2xl
-                px-5
-                py-4
-                outline-none
-              "
-            />
-
-            {/* SORT */}
-
-            <select
-
-              value={sortOption}
-
-              onChange={(e) =>
-
-                setSortOption(
-                  e.target.value
-                )
-              }
-
-              className="
-                border
-                rounded-2xl
-                px-5
-                py-4
-                outline-none
-              "
-            >
-
-              <option value="newest">
-                Newest
-              </option>
-
-              <option value="cheapest">
-                Cheapest
-              </option>
-
-              <option value="expensive">
-                Most Expensive
-              </option>
-
-            </select>
-
-          </div>
-
-        </div>
-
-        {/* LOADING */}
-
-        {loading && (
+          {/* SEARCH BAR */}
 
           <div
             className="
               flex
-              justify-center
-              py-24
+              flex-col
+              lg:flex-row
+              gap-4
             "
           >
 
-            <h2
+            <div
               className="
-                text-4xl
-                font-black
-                text-orange-500
+                flex-1
+                relative
               "
             >
 
-              Loading...
+              <Search
+                size={22}
+                className="
+                  absolute
+                  left-5
+                  top-1/2
+                  -translate-y-1/2
+                  text-gray-400
+                "
+              />
 
-            </h2>
+              <input
+
+                type="text"
+
+                placeholder="
+                  Search by title,
+                  location or keyword...
+                "
+
+                value={search}
+
+                onChange={(e) =>
+
+                  setSearch(
+                    e.target.value
+                  )
+                }
+
+                className="
+                  w-full
+                  border
+                  border-gray-200
+                  rounded-2xl
+                  py-5
+                  pl-14
+                  pr-5
+                  text-lg
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-orange-400
+                "
+              />
+
+            </div>
+
+            <button
+
+              onClick={() =>
+
+                setShowFilters(
+                  !showFilters
+                )
+              }
+
+              className="
+                bg-orange-500
+                hover:bg-orange-600
+                text-white
+                px-8
+                rounded-2xl
+                font-bold
+                flex
+                items-center
+                justify-center
+                gap-3
+                transition
+              "
+            >
+
+              <SlidersHorizontal
+                size={22}
+              />
+
+              Filters
+
+            </button>
 
           </div>
-        )}
 
-        {/* EMPTY STATE */}
+          {/* ADVANCED FILTERS */}
 
-        {!loading &&
-          properties.length === 0 && (
+          {showFilters && (
+
+            <div
+              className="
+                mt-8
+                border-t
+                pt-8
+              "
+            >
+
+              <AdvancedFilters
+
+                categories={
+                  categories
+                }
+
+                selectedCategory={
+                  selectedCategory
+                }
+
+                setSelectedCategory={
+                  setSelectedCategory
+                }
+
+                minPrice={
+                  minPrice
+                }
+
+                setMinPrice={
+                  setMinPrice
+                }
+
+                maxPrice={
+                  maxPrice
+                }
+
+                setMaxPrice={
+                  setMaxPrice
+                }
+
+                bedrooms={
+                  bedrooms
+                }
+
+                setBedrooms={
+                  setBedrooms
+                }
+
+              />
+
+            </div>
+          )}
+
+        </div>
+
+      </section>
+
+      {/* PROPERTIES */}
+
+      <section
+        className="
+          px-6
+          py-16
+        "
+      >
+
+        <div
+          className="
+            max-w-7xl
+            mx-auto
+          "
+        >
+
+          {/* TOP */}
 
           <div
             className="
-              bg-white
-              rounded-3xl
-              p-14
-              text-center
-              shadow-md
+              flex
+              flex-col
+              md:flex-row
+              md:items-center
+              md:justify-between
+              gap-4
+              mb-10
             "
           >
 
-            <h2
+            <div>
+
+              <h2
+                className="
+                  text-4xl
+                  font-black
+                  mb-2
+                "
+              >
+
+                Available Properties
+
+              </h2>
+
+              <p
+                className="
+                  text-gray-500
+                  text-lg
+                "
+              >
+
+                {
+                  filteredProperties.length
+                }
+                {" "}
+                properties found
+
+              </p>
+
+            </div>
+
+          </div>
+
+          {/* LOADING */}
+
+          {loading ? (
+
+            <div
               className="
-                text-4xl
-                font-black
-                mb-4
+                py-32
+                text-center
               "
             >
 
-              No properties found
+              <h3
+                className="
+                  text-4xl
+                  font-black
+                  text-orange-500
+                "
+              >
 
-            </h2>
+                Loading properties...
 
-            <p
+              </h3>
+
+            </div>
+
+          ) : filteredProperties.length === 0 ? (
+
+            <div
               className="
-                text-gray-500
+                bg-white
+                rounded-3xl
+                p-20
+                text-center
+                shadow-md
               "
             >
 
-              Try adjusting your
-              filters or search.
+              <h3
+                className="
+                  text-4xl
+                  font-black
+                  mb-4
+                "
+              >
 
-            </p>
+                No Properties Found
 
-          </div>
-        )}
+              </h3>
 
-        {/* PROPERTY GRID */}
+              <p
+                className="
+                  text-gray-500
+                  text-lg
+                "
+              >
 
-        {!loading &&
-          properties.length > 0 && (
+                Try changing your
+                search or filters.
 
-          <div
-            className="
-              grid
-              md:grid-cols-2
-              xl:grid-cols-3
-              gap-8
-            "
-          >
+              </p>
 
-            {properties.map(
-              (property) => (
+            </div>
 
-                <PropertyCard
+          ) : (
 
-                  key={
-                    property.id
-                  }
+            <div
+              className="
+                grid
+                md:grid-cols-2
+                xl:grid-cols-3
+                gap-8
+              "
+            >
 
-                  id={
-                    property.id
-                  }
+              {filteredProperties.map(
+                (property) => (
 
-                  title={
-                    property.title
-                  }
+                  <PropertyCard
 
-                  description={
-                    property.description
-                  }
+                    key={
+                      property.id
+                    }
 
-                  location={
-                    property.location
-                  }
+                    id={
+                      property.id
+                    }
 
-                  price={
-                    property.price
-                  }
+                    title={
+                      property.title
+                    }
 
-                  image_url={
-                    property.image_url
-                  }
+                    description={
+                      property.description
+                    }
 
-                  category={
-                    property.category
-                  }
+                    location={
+                      property.location
+                    }
 
-                  bedrooms={
-                    property.bedrooms
-                  }
+                    price={
+                      property.price
+                    }
 
-                  bathrooms={
-                    property.bathrooms
-                  }
+                    image_url={
+                      property.image_url
+                    }
 
-                  featured={
-                    property.featured
-                  }
+                    category={
+                      property.category
+                    }
 
-                />
+                    bedrooms={
+                      property.bedrooms
+                    }
 
-              )
-            )}
+                    bathrooms={
+                      property.bathrooms
+                    }
 
-          </div>
-        )}
+                    views={
+                      property.views
+                    }
 
-      </div>
+                    featured={
+                      property.featured
+                    }
+
+                  />
+                )
+              )}
+
+            </div>
+          )}
+
+        </div>
+
+      </section>
 
     </main>
   )
